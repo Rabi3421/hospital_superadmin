@@ -1,8 +1,18 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { serializeDoc } from "@/lib/api-response";
+import { connectDb } from "@/lib/db";
+import ReferralPartner from "@/models/ReferralPartner";
 import NewHospitalForm from "./new-hospital-form";
 
-export default function NewHospitalPage() {
+export const dynamic = "force-dynamic";
+
+export default async function NewHospitalPage() {
+  await connectDb();
+  const referralPartners = serializeDoc(
+    await ReferralPartner.find({ status: "Active" }).select("referralPartnerId name phone email organization type").sort({ name: 1 }),
+  ) as unknown as Array<{ referralPartnerId: string; name: string; phone?: string; email?: string; organization?: string; type: string }>;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -18,7 +28,7 @@ export default function NewHospitalPage() {
           Back to Hospitals
         </Link>
       </div>
-      <NewHospitalForm />
+      <NewHospitalForm initialReferralPartners={referralPartners} />
     </div>
   );
 }

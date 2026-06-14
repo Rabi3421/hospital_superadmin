@@ -39,6 +39,11 @@ export default function HospitalRowActions({
     );
     if (!confirmed) return;
 
+    const typedHospitalId = window.prompt(
+      `This cannot be undone. Type ${hospitalId} to permanently delete this hospital and every related user and record.`,
+    );
+    if (typedHospitalId?.trim() !== hospitalId) return;
+
     setLoadingAction("delete");
     const response = await fetch(`/api/superadmin/hospitals/${hospitalId}`, { method: "DELETE" });
     setLoadingAction("");

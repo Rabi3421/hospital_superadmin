@@ -10,8 +10,10 @@ import {
   Images,
   LayoutDashboard,
   LifeBuoy,
+  Handshake,
   Settings,
   UsersRound,
+  WalletCards,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -29,7 +31,9 @@ const navItems: NavItem[] = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, section: "Main Menu", exact: true },
   { href: "/dashboard/hospitals", label: "Hospitals", icon: Building2, section: "Main Menu" },
   { href: "/dashboard/hospital-users", label: "Hospital Users", icon: UsersRound, section: "Main Menu" },
+  { href: "/dashboard/referral-partners", label: "Referral Partners", icon: Handshake, section: "Main Menu" },
   { href: "/dashboard/subscriptions", label: "Subscriptions", icon: CalendarDays, section: "Operations" },
+  { href: "/dashboard/collections", label: "Collections", icon: WalletCards, section: "Operations" },
   { href: "/dashboard/platform-payments", label: "Platform Payments", icon: CreditCard, section: "Operations" },
   {
     href: "/dashboard/public-content/departments",

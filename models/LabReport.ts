@@ -22,6 +22,8 @@ export interface LabReportDocument extends Document {
   status: "Draft" | "Published" | "Cancelled";
   preparedBy?: string;
   publishedAt?: Date;
+  reviewedByDoctorAt?: Date;
+  reviewedByDoctorId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -57,6 +59,8 @@ const labReportSchema = new Schema<LabReportDocument>(
     status: { type: String, enum: ["Draft", "Published", "Cancelled"], default: "Draft", required: true },
     preparedBy: { type: String, default: "" },
     publishedAt: { type: Date },
+    reviewedByDoctorAt: { type: Date },
+    reviewedByDoctorId: { type: String, default: "", trim: true },
   },
   { timestamps: true },
 );
@@ -65,6 +69,7 @@ labReportSchema.index({ hospitalId: 1, reportId: 1 }, { unique: true });
 labReportSchema.index({ hospitalId: 1, labOrderId: 1 });
 labReportSchema.index({ hospitalId: 1, patientId: 1 });
 labReportSchema.index({ hospitalId: 1, doctorUserId: 1 });
+labReportSchema.index({ hospitalId: 1, doctorUserId: 1, status: 1, reviewedByDoctorAt: 1 });
 labReportSchema.index({ hospitalId: 1, status: 1 });
 labReportSchema.index({ hospitalId: 1, createdAt: 1 });
 

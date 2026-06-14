@@ -1,12 +1,12 @@
 import { NextRequest } from "next/server";
 import { errorResponse, serializeDoc, successResponse } from "@/lib/api-response";
 import { getDashboardRouteForRole } from "@/lib/hospital-dashboard";
-import { getHospitalAuthSession } from "@/lib/hospital-auth";
+import { getHospitalAuthSession, getOwnerBillingAuthSession } from "@/lib/hospital-auth";
 import { buildPatientSetupState } from "@/lib/hospital-patient";
 import { resolveHospitalPermissions } from "@/lib/hospital-permissions";
 
 export async function GET(req: NextRequest) {
-  const session = await getHospitalAuthSession(req);
+  const session = await getHospitalAuthSession(req) ?? await getOwnerBillingAuthSession(req);
   if (!session) return errorResponse("Unauthorized hospital session", 401);
   const permissions = resolveHospitalPermissions(session.user.role, session.user.permissions);
   const patientState = await buildPatientSetupState(session);
@@ -34,7 +34,9 @@ export async function GET(req: NextRequest) {
       },
       role: session.user.role,
       permissions,
-      dashboardRoute: getDashboardRouteForRole(session.user.role),
+      dashboardRoute: session.hospital.suspendedForNonPaymentAt
+        ? "/dashboard/owner/subscription-billing"
+        : getDashboardRouteForRole(session.user.role),
       ...patientState,
     }),
     "Hospital session authenticated",

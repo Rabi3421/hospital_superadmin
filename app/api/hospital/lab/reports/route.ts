@@ -57,6 +57,7 @@ export async function GET(req: NextRequest) {
       const value = req.nextUrl.searchParams.get(key)?.trim();
       if (value) filter[key] = value;
     });
+    if (session.user.role === "DOCTOR") filter.doctorUserId = session.payload.userId;
     const search = (req.nextUrl.searchParams.get("search") ?? req.nextUrl.searchParams.get("q"))?.trim();
     if (search) {
       const regex = new RegExp(escapeRegex(search), "i");

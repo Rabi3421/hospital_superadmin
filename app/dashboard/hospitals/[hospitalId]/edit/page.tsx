@@ -5,6 +5,7 @@ import { serializeDoc } from "@/lib/api-response";
 import { connectDb } from "@/lib/db";
 import { getSuperAdminFromCookies } from "@/lib/superadmin-auth";
 import Hospital from "@/models/Hospital";
+import ReferralPartner from "@/models/ReferralPartner";
 import EditHospitalForm from "./edit-hospital-form";
 
 export const dynamic = "force-dynamic";
@@ -17,9 +18,13 @@ export default async function EditHospitalPage({ params }: PageProps) {
 
   await connectDb();
   const { hospitalId } = await params;
-  const hospitalDoc = await Hospital.findOne({ hospitalId });
+  const [hospitalDoc, referralPartnerDocs] = await Promise.all([
+    Hospital.findOne({ hospitalId }),
+    ReferralPartner.find({ status: "Active" }).select("referralPartnerId name organization type").sort({ name: 1 }),
+  ]);
   if (!hospitalDoc) notFound();
   const hospital = serializeDoc(hospitalDoc);
+  const referralPartners = serializeDoc(referralPartnerDocs);
 
   return (
     <div className="space-y-6">
@@ -37,7 +42,7 @@ export default async function EditHospitalPage({ params }: PageProps) {
           Back to Details
         </Link>
       </div>
-      <EditHospitalForm hospital={hospital} />
+      <EditHospitalForm hospital={hospital} referralPartners={referralPartners} />
     </div>
   );
 }

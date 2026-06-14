@@ -89,11 +89,13 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await requireHospitalPermission(req, "doctor_availability_create");
-    if (session.user.role === "DOCTOR") {
-      throw new Error("Forbidden: doctors cannot create availability directly");
-    }
     const hospitalId = session.payload.hospitalId;
-    const body = createSchema.parse(await req.json());
+    const requestBody = await req.json();
+    const body = createSchema.parse({
+      ...requestBody,
+      doctorUserId:
+        session.user.role === "DOCTOR" ? session.payload.userId : requestBody.doctorUserId,
+    });
     await connectDb();
 
     // Validate time ordering
@@ -129,6 +131,7 @@ export async function POST(req: NextRequest) {
         hospitalId,
         _id: body.doctorProfileId,
         status: "Active",
+        ...(session.user.role === "DOCTOR" ? { userId: session.payload.userId } : {}),
       });
       if (!profile) throw new Error("Doctor profile not found or inactive for this hospital");
     }

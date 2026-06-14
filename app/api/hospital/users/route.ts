@@ -3,6 +3,8 @@ import { NextRequest } from "next/server";
 import { errorResponse, handleApiError, serializeDoc, successResponse } from "@/lib/api-response";
 import { connectDb } from "@/lib/db";
 import { requireHospitalPermission } from "@/lib/hospital-auth";
+import { ensureHospitalCapacity } from "@/lib/hospital-capacity";
+import { roleAllowedForHospital } from "@/lib/subscription-plans";
 import {
   defaultPermissionsForHospitalUser,
   ensureCanAssignHospitalUserRole,
@@ -59,6 +61,12 @@ export async function POST(req: NextRequest) {
     const body = hospitalUserCreateSchema.parse(await req.json());
     ensureCanAssignHospitalUserRole(session.user.role, body.role);
     await connectDb();
+    if (!roleAllowedForHospital(session.hospital, body.role)) {
+      return errorResponse(`The ${session.hospital.subscriptionPlan} plan does not include the ${body.role.replaceAll("_", " ").toLowerCase()} dashboard`, 403);
+    }
+    if (body.role !== "PATIENT") {
+      await ensureHospitalCapacity(session.hospital, body.role === "DOCTOR" ? "doctor" : "staff");
+    }
 
     const existing = await HospitalUser.findOne({ hospitalId: session.payload.hospitalId, email: body.email });
     if (existing) {

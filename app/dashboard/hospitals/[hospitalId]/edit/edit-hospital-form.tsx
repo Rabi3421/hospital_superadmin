@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Save, X } from "lucide-react";
+import { normalizeSubscriptionPlanName, subscriptionPlanNames } from "@/lib/subscription-plans";
 
 type HospitalEditData = {
   hospitalId: string;
@@ -11,6 +12,8 @@ type HospitalEditData = {
   ownerName: string;
   ownerPhone: string;
   ownerEmail: string;
+  referredBy?: string;
+  referralPartnerId?: string;
   address: string;
   city: string;
   state: string;
@@ -27,7 +30,9 @@ type HospitalEditData = {
   maxPatients: number;
 };
 
-export default function EditHospitalForm({ hospital }: { hospital: HospitalEditData }) {
+type ReferralPartner = { referralPartnerId: string; name: string; organization?: string; type: string };
+
+export default function EditHospitalForm({ hospital, referralPartners }: { hospital: HospitalEditData; referralPartners: ReferralPartner[] }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -74,6 +79,17 @@ export default function EditHospitalForm({ hospital }: { hospital: HospitalEditD
             <Field name="ownerEmail" label="Owner Email" type="email" defaultValue={hospital.ownerEmail} required className="md:col-span-2" />
           </Section>
 
+          <Section title="Referral source" description="Track the person who introduced or acquired this hospital client. Use Direct / Self when there is no external reference.">
+            <label className="block md:col-span-2">
+              <span className="text-sm font-bold text-[#394340]">Reference Person / Referred By</span>
+              <select name="referralPartnerId" defaultValue={hospital.referralPartnerId ?? ""} className="mt-2 h-10 w-full rounded-md border border-[#dfe8e4] px-3 text-sm outline-none focus:border-[#278b7c]">
+                <option value="">Direct / Self (no external reference)</option>
+                {referralPartners.map((partner) => <option key={partner.referralPartnerId} value={partner.referralPartnerId}>{partner.name}{partner.organization ? ` · ${partner.organization}` : ""} ({partner.type})</option>)}
+              </select>
+              {!hospital.referralPartnerId && hospital.referredBy && hospital.referredBy !== "Direct / Self" ? <p className="mt-2 text-xs font-semibold text-amber-700">Legacy reference “{hospital.referredBy}” is not linked to a profile. Select a profile or Direct / Self before saving.</p> : null}
+            </label>
+          </Section>
+
           <Section title="Registration and branding" description="Optional public and compliance details.">
             <Field name="registrationNumber" label="Registration Number" defaultValue={hospital.registrationNumber ?? ""} />
             <Field name="gstNumber" label="GST Number" defaultValue={hospital.gstNumber ?? ""} />
@@ -87,11 +103,10 @@ export default function EditHospitalForm({ hospital }: { hospital: HospitalEditD
           <div className="mt-5 grid gap-4">
             <Select name="status" label="Hospital Status" defaultValue={hospital.status} options={["Trial", "Active", "Suspended", "Cancelled", "Pending"]} />
             <Select name="websiteStatus" label="Website Status" defaultValue={hospital.websiteStatus} options={["Live", "Maintenance", "Coming Soon"]} />
-            <Field name="subscriptionPlan" label="Subscription Plan" defaultValue={hospital.subscriptionPlan} required />
-            <Field name="monthlyPrice" label="Monthly Price" type="number" defaultValue={hospital.monthlyPrice} />
-            <Field name="maxDoctors" label="Max Doctors" type="number" defaultValue={hospital.maxDoctors} />
-            <Field name="maxStaff" label="Max Staff" type="number" defaultValue={hospital.maxStaff} />
-            <Field name="maxPatients" label="Max Patients" type="number" defaultValue={hospital.maxPatients} />
+            <Select name="subscriptionPlan" label="Subscription Plan" defaultValue={normalizeSubscriptionPlanName(hospital.subscriptionPlan)} options={[...subscriptionPlanNames]} />
+            <p className="rounded-md border border-teal-100 bg-white p-3 text-xs leading-5 text-slate-600">
+              Price and capacity limits are automatically updated from the selected plan catalog.
+            </p>
           </div>
         </aside>
       </div>

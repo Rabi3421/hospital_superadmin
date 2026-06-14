@@ -37,9 +37,16 @@ export async function GET(req: NextRequest) {
     }
 
     await connectDb();
+    if (session.user.role === "DOCTOR") {
+      const [appointmentPatientIds, consultationPatientIds] = await Promise.all([
+        Appointment.distinct("patientId", { hospitalId, doctorUserId: session.payload.userId }),
+        Consultation.distinct("patientId", { hospitalId, doctorUserId: session.payload.userId }),
+      ]);
+      filter.patientId = { $in: [...new Set([...appointmentPatientIds, ...consultationPatientIds])] };
+    }
     const [patients, total] = await Promise.all([
       Patient.find(filter)
-        .select("patientId name phone email gender age dateOfBirth bloodGroup status createdAt")
+        .select("patientId name phone email gender age dateOfBirth bloodGroup allergies status createdAt")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -77,7 +84,7 @@ export async function GET(req: NextRequest) {
       totalPrescriptions: prescriptionCountByPatient.get(patient.patientId) ?? 0,
       totalLabReports: labReportCountByPatient.get(patient.patientId) ?? 0,
     }));
-    const pagination = { page, limit, total, pages: Math.ceil(total / limit) };
+    const pagination = { page, limit, total, totalPages: Math.ceil(total / limit) };
 
     return successResponse(
       serializeDoc({ patients: records, pagination }),

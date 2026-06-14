@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
       const value = req.nextUrl.searchParams.get(key)?.trim();
       if (value) filter[key] = value;
     });
+    if (session.user.role === "DOCTOR") filter.doctorUserId = session.payload.userId;
 
     const [appointments, total] = await Promise.all([
       Appointment.find(filter).sort({ appointmentDate: -1, tokenNumber: 1, createdAt: -1 }).skip(skip).limit(limit),

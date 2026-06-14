@@ -21,6 +21,7 @@ type HospitalDetail = {
   ownerName: string;
   ownerPhone: string;
   ownerEmail: string;
+  referredBy?: string;
   address: string;
   city: string;
   state: string;
@@ -145,6 +146,7 @@ export default async function HospitalDetailPage({ params }: PageProps) {
           <Info label="Name" value={hospital.ownerName} />
           <Info label="Email" value={hospital.ownerEmail} />
           <Info label="Phone" value={hospital.ownerPhone} />
+          <Info label="Referred By" value={hospital.referredBy || "Not recorded"} />
         </InfoCard>
         <InfoCard title="Subscription" icon={<CreditCard size={18} />}>
           <Info label="Plan" value={subscription?.planName ?? hospital.subscriptionPlan} />

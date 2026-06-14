@@ -8,6 +8,10 @@ export interface PlatformPaymentDocument extends Document {
   transactionId?: string;
   billingMonth: string;
   status: "Paid" | "Pending" | "Failed" | "Refunded";
+  source: "Owner Submission" | "Superadmin";
+  reviewedBy?: string;
+  reviewedAt?: Date;
+  rejectionReason?: string;
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -31,6 +35,10 @@ const platformPaymentSchema = new Schema<PlatformPaymentDocument>(
       default: "Pending",
       required: true,
     },
+    source: { type: String, enum: ["Owner Submission", "Superadmin"], default: "Superadmin", required: true },
+    reviewedBy: { type: String, default: "", trim: true },
+    reviewedAt: { type: Date },
+    rejectionReason: { type: String, default: "", trim: true },
     notes: { type: String, default: "" },
   },
   { timestamps: true },

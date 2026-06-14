@@ -5,6 +5,8 @@ export interface HospitalDepartmentDocument extends Document {
   name: string;
   description?: string;
   icon?: string;
+  imageUrl?: string;
+  tag?: string;
   status: "Active" | "Inactive";
   sortOrder: number;
   createdAt: Date;
@@ -17,6 +19,8 @@ const hospitalDepartmentSchema = new Schema<HospitalDepartmentDocument>(
     name: { type: String, required: true, trim: true },
     description: { type: String, default: "" },
     icon: { type: String, default: "" },
+    imageUrl: { type: String, default: "" },
+    tag: { type: String, default: "" },
     status: { type: String, enum: ["Active", "Inactive"], default: "Active", required: true },
     sortOrder: { type: Number, default: 0 },
   },

@@ -78,6 +78,7 @@ export async function GET(req: NextRequest) {
       const value = req.nextUrl.searchParams.get(key)?.trim();
       if (value) filter[key] = value;
     });
+    if (session.user.role === "DOCTOR") filter.doctorUserId = session.payload.userId;
     const search = (req.nextUrl.searchParams.get("search") ?? req.nextUrl.searchParams.get("q"))?.trim();
     if (search) {
       const regex = new RegExp(escapeRegex(search), "i");
@@ -134,10 +135,25 @@ export async function POST(req: NextRequest) {
   try {
     const session = await requireHospitalPermission(req, "lab_orders_create");
     const hospitalId = session.payload.hospitalId;
-    const body = labOrderCreateSchema.parse(await req.json());
+    const requestBody = await req.json();
+    const body = labOrderCreateSchema.parse({
+      ...requestBody,
+      doctorUserId:
+        session.user.role === "DOCTOR" ? session.payload.userId : requestBody.doctorUserId,
+    });
     await connectDb();
 
     const refs = await validateRefs(hospitalId, body);
+    if (session.user.role === "DOCTOR") {
+      const relatedDoctorIds = [
+        refs.appointment?.doctorUserId,
+        refs.consultation?.doctorUserId,
+        refs.prescription?.doctorUserId,
+      ].filter(Boolean);
+      if (!relatedDoctorIds.length || relatedDoctorIds.some((doctorId) => doctorId !== session.payload.userId)) {
+        return errorResponse("Doctors can only order tests for their own assigned patient encounters", 403);
+      }
+    }
     const tests = await validateLabOrderTests(body.testIds, hospitalId);
     const order = await LabOrder.create({
       hospitalId,

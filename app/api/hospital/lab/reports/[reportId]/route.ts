@@ -32,7 +32,9 @@ export async function GET(req: NextRequest, context: RouteContext) {
     const session = await requireHospitalPermission(req, "lab_reports_view");
     const { reportId } = await context.params;
     await connectDb();
-    const report = await LabReport.findOne({ hospitalId: session.payload.hospitalId, reportId });
+    const filter: Record<string, unknown> = { hospitalId: session.payload.hospitalId, reportId };
+    if (session.user.role === "DOCTOR") filter.doctorUserId = session.payload.userId;
+    const report = await LabReport.findOne(filter);
     if (!report) return errorResponse("Lab report not found", 404);
     const hospitalId = session.payload.hospitalId;
     const [labOrder, patient, doctor, doctorProfile] = await Promise.all([
@@ -63,7 +65,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     const { reportId } = await context.params;
     const body = reportUpdateSchema.parse(await req.json());
     await connectDb();
-    const report = await LabReport.findOne({ hospitalId: session.payload.hospitalId, reportId });
+    const filter: Record<string, unknown> = { hospitalId: session.payload.hospitalId, reportId };
+    if (session.user.role === "DOCTOR") filter.doctorUserId = session.payload.userId;
+    const report = await LabReport.findOne(filter);
     if (!report) return errorResponse("Lab report not found", 404);
     if (report.status !== "Draft") return errorResponse("Only draft lab reports can be edited", 409);
     if (body.results) {

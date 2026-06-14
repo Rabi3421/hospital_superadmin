@@ -59,15 +59,14 @@ export async function GET(req: NextRequest, context: RouteContext) {
 export async function PATCH(req: NextRequest, context: RouteContext) {
   try {
     const session = await requireHospitalPermission(req, "doctor_slots_update");
-    if (session.user.role === "DOCTOR") {
-      throw new Error("Forbidden: doctors cannot update slots");
-    }
     const { slotId } = await context.params;
     const hospitalId = session.payload.hospitalId;
     const body = patchSchema.parse(await req.json());
     await connectDb();
 
-    const slot = await AppointmentSlot.findOne({ hospitalId, slotId });
+    const filter: Record<string, unknown> = { hospitalId, slotId };
+    if (session.user.role === "DOCTOR") filter.doctorUserId = session.payload.userId;
+    const slot = await AppointmentSlot.findOne(filter);
     if (!slot) return errorResponse("Slot not found", 404);
     if (slot.status === "Cancelled") return errorResponse("Cannot update cancelled slot", 409);
 

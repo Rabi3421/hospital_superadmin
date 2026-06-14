@@ -8,6 +8,8 @@ import { setHospitalAuthCookie, signHospitalUserToken } from "@/lib/hospital-aut
 import { buildPatientSetupState } from "@/lib/hospital-patient";
 import { resolveHospitalPermissions } from "@/lib/hospital-permissions";
 import { getHospitalIdFromRequest, requireValidHospital } from "@/lib/tenant";
+import { roleAllowedForHospital } from "@/lib/subscription-plans";
+import Hospital from "@/models/Hospital";
 import HospitalUser from "@/models/HospitalUser";
 
 const loginSchema = z.object({
@@ -29,9 +31,18 @@ export async function POST(req: NextRequest) {
     const headers = new Headers(req.headers);
     headers.set("x-hospital-id", hospitalId);
     const tenantRequest = new NextRequest(req.url, { method: "GET", headers });
-    const hospital = await requireValidHospital(tenantRequest);
-    if (!["Trial", "Active"].includes(hospital.status)) {
-      return errorResponse("Hospital is not active for login", 403);
+    let hospital;
+    try {
+      hospital = await requireValidHospital(tenantRequest);
+    } catch (error) {
+      if (!(error instanceof Error) || error.message !== "Hospital is suspended") throw error;
+      await connectDb();
+      hospital = await Hospital.findOne({
+        hospitalId,
+        status: "Suspended",
+        suspendedForNonPaymentAt: { $exists: true },
+      });
+      if (!hospital) throw error;
     }
 
     await connectDb();
@@ -42,6 +53,13 @@ export async function POST(req: NextRequest) {
     });
     if (!user) return errorResponse("Invalid email or password", 401);
     if (user.status === "Blocked") return errorResponse("Hospital user account is blocked", 403);
+    const billingRecovery = Boolean(hospital.suspendedForNonPaymentAt);
+    if (billingRecovery && user.role !== "HOSPITAL_OWNER") {
+      return errorResponse("Hospital service is suspended for non-payment", 403);
+    }
+    if (!billingRecovery && !roleAllowedForHospital(hospital, user.role)) {
+      return errorResponse(`The ${hospital.subscriptionPlan} plan does not include the ${user.role.replaceAll("_", " ").toLowerCase()} dashboard`, 403);
+    }
 
     const passwordMatches = await bcrypt.compare(body.password, user.passwordHash);
     if (!passwordMatches) return errorResponse("Invalid email or password", 401);
@@ -69,7 +87,7 @@ export async function POST(req: NextRequest) {
         },
         role: user.role,
         permissions,
-        dashboardRoute: getDashboardRouteForRole(user.role),
+        dashboardRoute: billingRecovery ? "/dashboard/owner/subscription-billing" : getDashboardRouteForRole(user.role),
         ...patientState,
       }),
       "Hospital user logged in",

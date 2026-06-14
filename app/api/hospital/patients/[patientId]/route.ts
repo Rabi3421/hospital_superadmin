@@ -4,6 +4,8 @@ import { errorResponse, handleApiError, serializeDoc, successResponse } from "@/
 import { connectDb } from "@/lib/db";
 import { patientEditableFields, pickDefined } from "@/lib/hospital-clinical";
 import { requireHospitalPermission } from "@/lib/hospital-auth";
+import Appointment from "@/models/Appointment";
+import Consultation from "@/models/Consultation";
 import Patient from "@/models/Patient";
 
 const patientUpdateSchema = z.object({
@@ -36,6 +38,13 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
     const patient = await Patient.findOne({ hospitalId: session.payload.hospitalId, patientId });
     if (!patient) return errorResponse("Patient not found", 404);
+    if (session.user.role === "DOCTOR") {
+      const assignedRecords = await Promise.all([
+        Appointment.exists({ hospitalId: session.payload.hospitalId, patientId, doctorUserId: session.payload.userId }),
+        Consultation.exists({ hospitalId: session.payload.hospitalId, patientId, doctorUserId: session.payload.userId }),
+      ]);
+      if (!assignedRecords.some(Boolean)) return errorResponse("Patient not found", 404);
+    }
 
     return successResponse(serializeDoc(patient), "Patient fetched");
   } catch (error) {

@@ -6,8 +6,15 @@ import { connectDb } from "@/lib/db";
 import { defaultPermissionsForHospitalUser } from "@/lib/hospital-users";
 import { appendSlugSuffix, createSlug } from "@/lib/slug";
 import { getSuperAdminFromRequest } from "@/lib/superadmin-auth";
+import { seedHospitalWebsiteStarter } from "@/lib/hospital-website-starter";
+import { getPlanPrice, getSubscriptionPlan, subscriptionPlanNames } from "@/lib/subscription-plans";
 import Hospital, { type HospitalDocument } from "@/models/Hospital";
+import HospitalDepartment from "@/models/HospitalDepartment";
+import HospitalGallery from "@/models/HospitalGallery";
+import HospitalNotice from "@/models/HospitalNotice";
 import HospitalUser, { type HospitalUserDocument } from "@/models/HospitalUser";
+import HospitalWebsitePage from "@/models/HospitalWebsitePage";
+import ReferralPartner from "@/models/ReferralPartner";
 import Subscription, { type SubscriptionDocument } from "@/models/Subscription";
 
 const initialUserSchema = z.object({
@@ -24,6 +31,8 @@ const hospitalSchema = z.object({
   ownerName: z.string().min(2),
   ownerPhone: z.string().min(6),
   ownerEmail: z.string().email().transform((value) => value.toLowerCase()),
+  referredBy: z.string().min(2),
+  referralPartnerId: z.string().trim().optional(),
   address: z.string().min(3),
   city: z.string().min(2),
   state: z.string().min(2),
@@ -31,12 +40,9 @@ const hospitalSchema = z.object({
   logoUrl: z.string().url().or(z.literal("")).optional(),
   registrationNumber: z.string().optional(),
   gstNumber: z.string().optional(),
-  subscriptionPlan: z.string().min(1).default("Trial"),
-  monthlyPrice: z.coerce.number().min(0).default(0),
-  maxDoctors: z.coerce.number().int().min(0).default(5),
-  maxStaff: z.coerce.number().int().min(0).default(20),
-  maxPatients: z.coerce.number().int().min(0).default(1000),
-  trialDays: z.coerce.number().int().min(1).max(365).default(30),
+  subscriptionPlan: z.enum(subscriptionPlanNames).default("Free Starter"),
+  monthlyPrice: z.coerce.number().min(0),
+  pricingNote: z.string().max(500).optional(),
   skipInitialUser: z.boolean().optional().default(false),
   initialUser: initialUserSchema.optional(),
   settings: z
@@ -103,6 +109,7 @@ export async function GET(req: NextRequest) {
         { name: new RegExp(search, "i") },
         { hospitalId: new RegExp(search, "i") },
         { ownerEmail: new RegExp(search, "i") },
+        { referredBy: new RegExp(search, "i") },
       ];
     }
     if (status) {
@@ -124,7 +131,25 @@ export async function POST(req: NextRequest) {
     }
 
     const body = hospitalSchema.parse(await req.json());
+    const selectedPlan = getSubscriptionPlan(body.subscriptionPlan);
+    if (!selectedPlan) {
+      return errorResponse("Invalid subscription plan", 422);
+    }
+    const selectedPrice = getPlanPrice(body.subscriptionPlan, body.monthlyPrice);
+    if (selectedPrice === undefined) {
+      return errorResponse("Invalid price for the selected subscription plan", 422);
+    }
+    const priceType = selectedPrice === 0 ? "Free" : selectedPrice === selectedPlan.priceOptions[0] ? "Standard" : "Negotiated";
+    if (priceType === "Negotiated" && !body.pricingNote?.trim()) {
+      return errorResponse("A negotiation note is required for the approved discounted price", 422);
+    }
     await connectDb();
+    const referralPartner = body.referralPartnerId
+      ? await ReferralPartner.findOne({ referralPartnerId: body.referralPartnerId, status: "Active" })
+      : null;
+    if (body.referralPartnerId && !referralPartner) {
+      return errorResponse("Selected referral partner is unavailable. Refresh and choose an active profile.", 422);
+    }
 
     const ownerEmailInUse = await Hospital.exists({ ownerEmail: body.ownerEmail });
     if (ownerEmailInUse) {
@@ -133,7 +158,7 @@ export async function POST(req: NextRequest) {
 
     const now = new Date();
     const trialEndDate = new Date(now);
-    trialEndDate.setDate(trialEndDate.getDate() + body.trialDays);
+    trialEndDate.setDate(trialEndDate.getDate() + 30);
 
     const hospitalId = await createHospitalId();
     const hospitalPayload = {
@@ -142,6 +167,8 @@ export async function POST(req: NextRequest) {
       ownerName: body.ownerName,
       ownerPhone: body.ownerPhone,
       ownerEmail: body.ownerEmail,
+      referredBy: referralPartner?.name ?? body.referredBy,
+      referralPartnerId: referralPartner?.referralPartnerId ?? "",
       address: body.address,
       city: body.city,
       state: body.state,
@@ -150,10 +177,10 @@ export async function POST(req: NextRequest) {
       registrationNumber: body.registrationNumber,
       gstNumber: body.gstNumber,
       subscriptionPlan: body.subscriptionPlan,
-      monthlyPrice: body.monthlyPrice,
-      maxDoctors: body.maxDoctors,
-      maxStaff: body.maxStaff,
-      maxPatients: body.maxPatients,
+      monthlyPrice: selectedPrice,
+      maxDoctors: selectedPlan.maxDoctors,
+      maxStaff: selectedPlan.maxStaff,
+      maxPatients: selectedPlan.maxPatients,
       hospitalId,
       slug: await createUniqueSlug(body.name),
       status: "Trial" as const,
@@ -178,13 +205,15 @@ export async function POST(req: NextRequest) {
       subscription = await Subscription.create({
         hospitalId: hospital.hospitalId,
         planName: body.subscriptionPlan,
-        monthlyPrice: body.monthlyPrice,
+        monthlyPrice: selectedPrice,
+        priceType,
+        pricingNote: body.pricingNote?.trim() ?? "",
         billingCycle: "Monthly",
         status: "Trial",
         startDate: now,
         endDate: trialEndDate,
         nextBillingDate: trialEndDate,
-        features: ["Core hospital tenant", "Public hospital website API", "Role-based dashboard API"],
+        features: [...selectedPlan.features],
       });
 
       if (body.initialUser) {
@@ -195,8 +224,12 @@ export async function POST(req: NextRequest) {
         if (existing) {
           await Promise.all([
             Hospital.deleteOne({ hospitalId: hospital.hospitalId }),
+            HospitalDepartment.deleteMany({ hospitalId: hospital.hospitalId }),
+            HospitalGallery.deleteMany({ hospitalId: hospital.hospitalId }),
+            HospitalNotice.deleteMany({ hospitalId: hospital.hospitalId }),
             Subscription.deleteMany({ hospitalId: hospital.hospitalId }),
             HospitalUser.deleteMany({ hospitalId: hospital.hospitalId }),
+            HospitalWebsitePage.deleteMany({ hospitalId: hospital.hospitalId }),
           ]);
           return errorResponse("A user with this email already exists for this hospital", 409);
         }
@@ -214,12 +247,17 @@ export async function POST(req: NextRequest) {
         });
         initialUser = await HospitalUser.findById(createdUser._id).select("-passwordHash");
       }
+      await seedHospitalWebsiteStarter(hospital);
     } catch (error) {
       if (hospital?.hospitalId) {
         await Promise.all([
           Hospital.deleteOne({ hospitalId: hospital.hospitalId }),
+          HospitalDepartment.deleteMany({ hospitalId: hospital.hospitalId }),
+          HospitalGallery.deleteMany({ hospitalId: hospital.hospitalId }),
+          HospitalNotice.deleteMany({ hospitalId: hospital.hospitalId }),
           Subscription.deleteMany({ hospitalId: hospital.hospitalId }),
           HospitalUser.deleteMany({ hospitalId: hospital.hospitalId }),
+          HospitalWebsitePage.deleteMany({ hospitalId: hospital.hospitalId }),
         ]);
       }
       throw error;

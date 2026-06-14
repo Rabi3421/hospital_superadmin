@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { errorResponse, handleApiError, serializeDoc, successResponse } from "@/lib/api-response";
 import { connectDb } from "@/lib/db";
+import { reconcileSubscriptionBilling } from "@/lib/subscription-billing";
 import { getHospitalIdFromRequest } from "@/lib/tenant";
 import Hospital from "@/models/Hospital";
 
@@ -12,6 +13,7 @@ export async function GET(req: NextRequest) {
     }
 
     await connectDb();
+    await reconcileSubscriptionBilling(hospitalId);
     const hospital = await Hospital.findOne({ hospitalId }).select(
       "hospitalId name slug logoUrl type status websiteStatus",
     );

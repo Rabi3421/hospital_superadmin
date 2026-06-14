@@ -11,21 +11,26 @@ import {
   Pencil,
   X,
 } from "lucide-react";
+import { getSubscriptionPlan, normalizeSubscriptionPlanName, subscriptionPlanNames } from "@/lib/subscription-plans";
 
 export type SubscriptionRow = {
   hospitalId: string;
   hospitalName: string;
   planName: string;
   monthlyPrice: number;
+  pricingNote?: string;
   billingCycle: string;
   status: string;
   nextBillingDate?: string;
+  graceEndsAt?: string;
   endDate?: string;
 };
 
 export default function SubscriptionTable({ subscriptions }: { subscriptions: SubscriptionRow[] }) {
   const router = useRouter();
   const [editing, setEditing] = useState<SubscriptionRow | null>(null);
+  const [editingPlanName, setEditingPlanName] = useState("");
+  const [editingPrice, setEditingPrice] = useState(0);
   const [extending, setExtending] = useState<SubscriptionRow | null>(null);
   const [loadingAction, setLoadingAction] = useState("");
   const [message, setMessage] = useState("");
@@ -34,6 +39,14 @@ export default function SubscriptionTable({ subscriptions }: { subscriptions: Su
   function resetFeedback() {
     setMessage("");
     setError("");
+  }
+
+  function beginEditing(subscription: SubscriptionRow) {
+    const planName = normalizeSubscriptionPlanName(subscription.planName);
+    const plan = getSubscriptionPlan(planName)!;
+    setEditing(subscription);
+    setEditingPlanName(planName);
+    setEditingPrice(plan.priceOptions.includes(subscription.monthlyPrice as never) ? subscription.monthlyPrice : plan.priceOptions[0]);
   }
 
   async function updateSubscription(event: FormEvent<HTMLFormElement>) {
@@ -136,6 +149,9 @@ export default function SubscriptionTable({ subscriptions }: { subscriptions: Su
                 <td className="px-5 py-4 font-semibold text-[#394340]">{subscription.billingCycle}</td>
                 <td className="px-5 py-4 font-semibold text-[#394340]">
                   {subscription.nextBillingDate ? new Date(subscription.nextBillingDate).toLocaleDateString() : "Not scheduled"}
+                  {subscription.graceEndsAt && ["Active", "Overdue", "Suspended"].includes(subscription.status) ? (
+                    <p className="mt-1 text-xs font-medium text-[#8a9591]">Grace through {new Date(subscription.graceEndsAt).toLocaleDateString()}</p>
+                  ) : null}
                 </td>
                 <td className="px-5 py-4"><StatusBadge value={subscription.status} /></td>
                 <td className="px-5 py-4">
@@ -143,7 +159,7 @@ export default function SubscriptionTable({ subscriptions }: { subscriptions: Su
                     <Link href={`/dashboard/hospitals/${subscription.hospitalId}`} title="View hospital" className={iconButton}>
                       <Eye size={16} />
                     </Link>
-                    <button type="button" onClick={() => setEditing(subscription)} title="Edit subscription" className={iconButton}>
+                    <button type="button" onClick={() => beginEditing(subscription)} title="Edit subscription" className={iconButton}>
                       <Pencil size={16} />
                     </button>
                     <button type="button" onClick={() => setExtending(subscription)} title="Extend trial" className={iconButton}>
@@ -174,8 +190,37 @@ export default function SubscriptionTable({ subscriptions }: { subscriptions: Su
       {editing ? (
         <Dialog title="Edit Subscription" description={`${editing.hospitalName} · ${editing.hospitalId}`} onClose={() => setEditing(null)}>
           <form onSubmit={updateSubscription} className="grid gap-4 sm:grid-cols-2">
-            <Field name="planName" label="Plan Name" defaultValue={editing.planName} required />
-            <Field name="monthlyPrice" label="Monthly Price" type="number" defaultValue={editing.monthlyPrice} required />
+            <label className="block">
+              <span className="text-sm font-bold text-[#394340]">Plan Name</span>
+              <select
+                name="planName"
+                value={editingPlanName}
+                onChange={(event) => {
+                  const planName = event.target.value;
+                  setEditingPlanName(planName);
+                  setEditingPrice(getSubscriptionPlan(planName)?.priceOptions[0] ?? 0);
+                }}
+                className="mt-2 h-10 w-full rounded-md border border-[#dfe8e4] px-3 text-sm outline-none focus:border-[#278b7c]"
+              >
+                {subscriptionPlanNames.map((option) => <option key={option}>{option}</option>)}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-[#394340]">Approved Monthly Price</span>
+              <select
+                name="monthlyPrice"
+                value={editingPrice}
+                onChange={(event) => setEditingPrice(Number(event.target.value))}
+                className="mt-2 h-10 w-full rounded-md border border-[#dfe8e4] px-3 text-sm outline-none focus:border-[#278b7c]"
+              >
+                {(getSubscriptionPlan(editingPlanName)?.priceOptions ?? [0]).map((price, index) => (
+                  <option key={price} value={price}>{price === 0 ? "Free trial" : `₹${price.toLocaleString("en-IN")}${index > 0 ? " (negotiated)" : ""}`}</option>
+                ))}
+              </select>
+            </label>
+            {editingPrice > 0 && editingPrice !== getSubscriptionPlan(editingPlanName)?.priceOptions[0] ? (
+              <Field name="pricingNote" label="Negotiation Approval Note" defaultValue={editing.pricingNote ?? ""} required />
+            ) : null}
             <Select name="billingCycle" label="Billing Cycle" defaultValue={editing.billingCycle} options={["Monthly", "Quarterly", "Yearly"]} />
             <Select name="status" label="Status" defaultValue={editing.status} options={["Trial", "Active", "Overdue", "Suspended", "Cancelled"]} />
             <div className="flex justify-end gap-3 sm:col-span-2">

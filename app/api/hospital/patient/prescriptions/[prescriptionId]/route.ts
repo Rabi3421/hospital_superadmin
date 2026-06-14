@@ -3,6 +3,9 @@ import { errorResponse, handleApiError, serializeDoc, successResponse } from "@/
 import { connectDb } from "@/lib/db";
 import { doctorMapFor, requirePatientAuth } from "@/lib/hospital-patient";
 import Appointment from "@/models/Appointment";
+import Hospital from "@/models/Hospital";
+import Patient from "@/models/Patient";
+import PharmacySale from "@/models/PharmacySale";
 import Prescription from "@/models/Prescription";
 
 type RouteContext = { params: Promise<{ prescriptionId: string }> };
@@ -19,11 +22,22 @@ export async function GET(req: NextRequest, context: RouteContext) {
       status: "Issued",
     });
     if (!prescription) return errorResponse("Prescription not found", 404);
-    const [doctorById, appointment] = await Promise.all([
+    const [doctorById, appointment, patient, hospital, sale] = await Promise.all([
       doctorMapFor(session.payload.hospitalId, [prescription.doctorUserId]),
       Appointment.findOne({ hospitalId: session.payload.hospitalId, appointmentId: prescription.appointmentId }).select(
         "appointmentId appointmentDate appointmentTime type status reason",
       ),
+      Patient.findOne({ hospitalId: session.payload.hospitalId, patientId: prescription.patientId }).select(
+        "patientId name phone email gender age bloodGroup allergies",
+      ),
+      Hospital.findOne({ hospitalId: session.payload.hospitalId }).select(
+        "hospitalId name address city state pincode ownerPhone logoUrl",
+      ),
+      PharmacySale.findOne({
+        hospitalId: session.payload.hospitalId,
+        prescriptionId,
+        saleStatus: "Completed",
+      }).select("saleId prescriptionId saleStatus createdAt"),
     ]);
 
     return successResponse(
@@ -32,6 +46,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
         consultationId: prescription.consultationId,
         appointmentId: prescription.appointmentId,
         doctor: doctorById.get(prescription.doctorUserId) ?? null,
+        patient,
+        hospital,
+        sale,
+        dispensed: Boolean(sale),
         consultation: { consultationId: prescription.consultationId },
         appointment,
         medicines: prescription.medicines,

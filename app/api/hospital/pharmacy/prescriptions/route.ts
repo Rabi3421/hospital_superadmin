@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     const session = await requireHospitalPermission(req, "pharmacy_prescription_queue_view");
     const hospitalId = session.payload.hospitalId;
     const { page, limit, skip } = getPagination(req.nextUrl.searchParams);
-    const filter: Record<string, unknown> = { hospitalId, status: "Issued" };
+    const filter: Record<string, unknown> = { hospitalId, status: "Issued", "medicines.0": { $exists: true } };
     ["patientId", "doctorUserId"].forEach((key) => {
       const value = req.nextUrl.searchParams.get(key)?.trim();
       if (value) filter[key] = value;
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
     const appointmentIds = prescriptions.map((prescription) => prescription.appointmentId);
     const prescriptionIds = prescriptions.map((prescription) => prescription.prescriptionId);
     const [patients, doctors, doctorProfiles, consultations, appointments, sales] = await Promise.all([
-      Patient.find({ hospitalId, patientId: { $in: patientIds } }).select("patientId name phone email gender age"),
+      Patient.find({ hospitalId, patientId: { $in: patientIds } }).select("patientId name phone email gender age bloodGroup allergies"),
       HospitalUser.find({ hospitalId, _id: { $in: doctorUserIds } }).select("name email phone role status"),
       HospitalDoctorPublicProfile.find({ hospitalId, userId: { $in: doctorUserIds } }).select("userId specialization qualification"),
       Consultation.find({ hospitalId, consultationId: { $in: consultationIds } }).select(

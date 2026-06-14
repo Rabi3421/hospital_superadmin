@@ -4,6 +4,9 @@ import { errorResponse, handleApiError, serializeDoc, successResponse } from "@/
 import { connectDb } from "@/lib/db";
 import { escapeRegex, generatePatientId, getPagination } from "@/lib/hospital-clinical";
 import { requireHospitalPermission } from "@/lib/hospital-auth";
+import { ensureHospitalCapacity } from "@/lib/hospital-capacity";
+import Appointment from "@/models/Appointment";
+import Consultation from "@/models/Consultation";
 import Patient from "@/models/Patient";
 
 const patientCreateSchema = z.object({
@@ -42,6 +45,13 @@ export async function GET(req: NextRequest) {
       const regex = new RegExp(escapeRegex(search), "i");
       filter.$or = [{ patientId: regex }, { name: regex }, { phone: regex }, { email: regex }];
     }
+    if (session.user.role === "DOCTOR") {
+      const [appointmentPatientIds, consultationPatientIds] = await Promise.all([
+        Appointment.distinct("patientId", { hospitalId, doctorUserId: session.payload.userId }),
+        Consultation.distinct("patientId", { hospitalId, doctorUserId: session.payload.userId }),
+      ]);
+      filter.patientId = { $in: [...new Set([...appointmentPatientIds, ...consultationPatientIds])] };
+    }
 
     const [patients, total] = await Promise.all([
       Patient.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
@@ -65,6 +75,7 @@ export async function POST(req: NextRequest) {
     const hospitalId = session.payload.hospitalId;
     const body = patientCreateSchema.parse(await req.json());
     await connectDb();
+    await ensureHospitalCapacity(session.hospital, "patient");
 
     const patient = await Patient.create({
       ...body,

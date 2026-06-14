@@ -15,15 +15,14 @@ const cancelSchema = z.object({
 export async function POST(req: NextRequest, context: RouteContext) {
   try {
     const session = await requireHospitalPermission(req, "doctor_availability_cancel");
-    if (session.user.role === "DOCTOR") {
-      throw new Error("Forbidden: doctors cannot cancel availability");
-    }
     const { availabilityId } = await context.params;
     const hospitalId = session.payload.hospitalId;
     const body = cancelSchema.parse(await req.json());
     await connectDb();
 
-    const availability = await DoctorAvailability.findOne({ hospitalId, availabilityId });
+    const filter: Record<string, unknown> = { hospitalId, availabilityId };
+    if (session.user.role === "DOCTOR") filter.doctorUserId = session.payload.userId;
+    const availability = await DoctorAvailability.findOne(filter);
     if (!availability) return errorResponse("Doctor availability not found", 404);
     if (availability.status !== "Active") {
       return errorResponse("Only Active availability can be cancelled", 409);

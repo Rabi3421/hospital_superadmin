@@ -5,9 +5,9 @@ import { errorResponse, handleApiError, serializeDoc, successResponse } from "@/
 import { connectDb } from "@/lib/db";
 import { generatePatientId } from "@/lib/hospital-clinical";
 import { getDashboardRouteForRole } from "@/lib/hospital-dashboard";
+import { ensureHospitalCapacity } from "@/lib/hospital-capacity";
 import { defaultPermissionsForHospitalUser } from "@/lib/hospital-users";
-import { getHospitalIdFromRequest } from "@/lib/tenant";
-import Hospital from "@/models/Hospital";
+import { getHospitalIdFromRequest, requireValidHospital } from "@/lib/tenant";
 import HospitalUser from "@/models/HospitalUser";
 import Patient from "@/models/Patient";
 
@@ -77,13 +77,8 @@ export async function POST(req: NextRequest) {
     const email = body.email ?? (identifierIsEmail ? body.identifier?.toLowerCase() : undefined);
     const phone = body.phone ?? (!identifierIsEmail ? body.identifier : undefined);
     const name = body.name ?? fallbackPatientName(email, phone);
+    const hospital = await requireValidHospital(req);
     await connectDb();
-
-    const hospital = await Hospital.findOne({ hospitalId });
-    if (!hospital) return errorResponse("Hospital not found", 404);
-    if (!["Trial", "Active"].includes(hospital.status)) {
-      return errorResponse(`Hospital is ${hospital.status.toLowerCase()}`, 403);
-    }
     if (hospital.websiteStatus === "Maintenance") {
       return errorResponse("Hospital website is currently under maintenance", 503, { websiteStatus: hospital.websiteStatus });
     }
@@ -110,6 +105,7 @@ export async function POST(req: NextRequest) {
     if (existingPatient) {
       return errorResponse("A patient record already exists. Please contact hospital reception to link your account.", 409);
     }
+    await ensureHospitalCapacity(hospital, "patient");
 
     const patient = await Patient.create({
       hospitalId,

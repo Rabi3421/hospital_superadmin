@@ -90,12 +90,12 @@ function PaymentDialog({ title, hospitals, payment, loading, error, onClose, onS
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#151918]/40 p-4 backdrop-blur-[2px]" onMouseDown={onClose}>
       <div className="w-full max-w-2xl rounded-lg bg-white shadow-[0_28px_80px_rgba(21,25,24,0.25)]" onMouseDown={(event) => event.stopPropagation()}>
-        <div className="flex items-start justify-between border-b border-[#edf2ef] px-5 py-4"><div><h2 className="text-lg font-bold">{title}</h2><p className="mt-1 text-xs font-semibold text-[#8a9591]">Platform subscription payment, separate from patient billing.</p></div><button onClick={onClose} title="Close" className={iconButton}><X size={17} /></button></div>
+        <div className="flex items-start justify-between border-b border-[#edf2ef] px-5 py-4"><div><h2 className="text-lg font-bold">{title}</h2><p className="mt-1 text-xs font-semibold text-[#8a9591]">Paid records must cover the hospital&apos;s full agreed monthly price.</p></div><button onClick={onClose} title="Close" className={iconButton}><X size={17} /></button></div>
         <form onSubmit={onSubmit} className="grid gap-4 p-5 sm:grid-cols-2">
           <Select name="hospitalId" label="Hospital" defaultValue={payment?.hospitalId} options={hospitals.map((item) => [item.hospitalId, item.name])} />
           <Field name="amount" label="Amount" type="number" defaultValue={payment?.amount} required />
           <Field name="paymentDate" label="Payment Date" type="date" defaultValue={payment?.paymentDate?.slice(0, 10)} required />
-          <Field name="billingMonth" label="Billing Month" placeholder="2026-06" defaultValue={payment?.billingMonth} required />
+          <Field name="billingMonth" label="Billing Month" type="month" defaultValue={payment?.billingMonth} required />
           <Select name="paymentMode" label="Payment Mode" defaultValue={payment?.paymentMode} options={["Cash", "UPI", "Bank Transfer", "Card", "Online"].map((item) => [item, item])} />
           <Select name="status" label="Status" defaultValue={payment?.status} options={["Paid", "Pending", "Failed", "Refunded"].map((item) => [item, item])} />
           <Field name="transactionId" label="Transaction ID" defaultValue={payment?.transactionId} />

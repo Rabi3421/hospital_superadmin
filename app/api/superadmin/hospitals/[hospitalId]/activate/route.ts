@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { errorResponse, handleApiError, serializeDoc, successResponse } from "@/lib/api-response";
 import { connectDb } from "@/lib/db";
 import { getSuperAdminFromRequest } from "@/lib/superadmin-auth";
+import { graceEndsFor, nextMonthlyDueDate } from "@/lib/subscription-billing";
 import Hospital from "@/models/Hospital";
 import Subscription from "@/models/Subscription";
 
@@ -19,27 +20,40 @@ export async function POST(req: NextRequest, context: RouteContext) {
     await connectDb();
     const { hospitalId } = await context.params;
     const now = new Date();
-    const nextBillingDate = new Date(now);
-    nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+    const nextBillingDate = nextMonthlyDueDate(now);
+    const existingHospital = await Hospital.findOne({ hospitalId });
+    if (!existingHospital) {
+      return errorResponse("Hospital not found", 404);
+    }
+    if (existingHospital.subscriptionPlan === "Free Starter") {
+      return errorResponse("Select Core Care or Complete Care before activating this hospital", 422);
+    }
 
     const hospital = await Hospital.findOneAndUpdate(
       { hospitalId },
       {
-        status: "Active",
-        websiteStatus: "Live",
-        billingStartDate: now,
-        nextBillingDate,
+        $set: {
+          status: "Active",
+          websiteStatus: "Live",
+          billingStartDate: now,
+          nextBillingDate,
+        },
+        $unset: { suspendedForNonPaymentAt: 1 },
       },
       { new: true },
     );
 
-    if (!hospital) {
-      return errorResponse("Hospital not found", 404);
-    }
-
     await Subscription.findOneAndUpdate(
       { hospitalId },
-      { status: "Active", startDate: now, nextBillingDate },
+      {
+        $set: {
+          status: "Active",
+          startDate: now,
+          nextBillingDate,
+          graceEndsAt: graceEndsFor(nextBillingDate),
+        },
+        $unset: { suspendedForNonPaymentAt: 1 },
+      },
       { new: true },
     );
 

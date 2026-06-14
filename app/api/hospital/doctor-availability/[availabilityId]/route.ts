@@ -53,15 +53,14 @@ export async function GET(req: NextRequest, context: RouteContext) {
 export async function PATCH(req: NextRequest, context: RouteContext) {
   try {
     const session = await requireHospitalPermission(req, "doctor_availability_update");
-    if (session.user.role === "DOCTOR") {
-      throw new Error("Forbidden: doctors cannot update availability");
-    }
     const { availabilityId } = await context.params;
     const hospitalId = session.payload.hospitalId;
     const body = patchSchema.parse(await req.json());
     await connectDb();
 
-    const availability = await DoctorAvailability.findOne({ hospitalId, availabilityId });
+    const filter: Record<string, unknown> = { hospitalId, availabilityId };
+    if (session.user.role === "DOCTOR") filter.doctorUserId = session.payload.userId;
+    const availability = await DoctorAvailability.findOne(filter);
     if (!availability) return errorResponse("Doctor availability not found", 404);
     if (availability.status !== "Active") {
       return errorResponse("Cannot update non-active availability", 409);
@@ -101,6 +100,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         hospitalId,
         _id: body.doctorProfileId,
         status: "Active",
+        ...(session.user.role === "DOCTOR" ? { userId: session.payload.userId } : {}),
       });
       if (!profile) throw new Error("Doctor profile not found or inactive for this hospital");
     }

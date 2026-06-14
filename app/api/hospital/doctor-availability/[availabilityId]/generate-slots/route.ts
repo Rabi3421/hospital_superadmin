@@ -21,14 +21,13 @@ function minutesToTime(minutes: number) {
 export async function POST(req: NextRequest, context: RouteContext) {
   try {
     const session = await requireHospitalPermission(req, "doctor_slots_generate");
-    if (session.user.role === "DOCTOR") {
-      throw new Error("Forbidden: doctors cannot generate slots");
-    }
     const { availabilityId } = await context.params;
     const hospitalId = session.payload.hospitalId;
     await connectDb();
 
-    const availability = await DoctorAvailability.findOne({ hospitalId, availabilityId });
+    const filter: Record<string, unknown> = { hospitalId, availabilityId };
+    if (session.user.role === "DOCTOR") filter.doctorUserId = session.payload.userId;
+    const availability = await DoctorAvailability.findOne(filter);
     if (!availability) return errorResponse("Doctor availability not found", 404);
     if (availability.status !== "Active") {
       return errorResponse("Can only generate slots for Active availability", 409);

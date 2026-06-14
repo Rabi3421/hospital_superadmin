@@ -39,7 +39,7 @@ export default async function SubscriptionsPage({ searchParams }: { searchParams
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-[#151918]">Subscriptions</h1>
-        <p className="mt-1 text-sm font-medium text-[#7a8581]">Review plans and update a subscription only when action is needed.</p>
+        <p className="mt-1 text-sm font-medium text-[#7a8581]">Monthly payment is due on the 5th, with service grace through the 10th before automatic suspension.</p>
       </div>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

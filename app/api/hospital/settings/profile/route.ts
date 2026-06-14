@@ -5,7 +5,7 @@ import { requireHospitalPermission } from "@/lib/hospital-auth";
 import { hospitalProfileUpdateSchema } from "@/lib/hospital-management";
 import Hospital from "@/models/Hospital";
 
-const fields = "hospitalId name slug type ownerName ownerPhone ownerEmail address city state pincode logoUrl registrationNumber gstNumber websiteStatus status settings";
+const fields = "hospitalId name slug type ownerName ownerPhone ownerEmail address city state pincode logoUrl description heroImageUrl publicPhone publicEmail mapEmbedUrl registrationNumber gstNumber websiteStatus status settings";
 
 export async function GET(req: NextRequest) {
   try {

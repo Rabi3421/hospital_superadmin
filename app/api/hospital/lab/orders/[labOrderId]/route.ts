@@ -28,7 +28,9 @@ export async function GET(req: NextRequest, context: RouteContext) {
     const { labOrderId } = await context.params;
     await connectDb();
 
-    const order = await LabOrder.findOne({ hospitalId: session.payload.hospitalId, labOrderId });
+    const filter: Record<string, unknown> = { hospitalId: session.payload.hospitalId, labOrderId };
+    if (session.user.role === "DOCTOR") filter.doctorUserId = session.payload.userId;
+    const order = await LabOrder.findOne(filter);
     if (!order) return errorResponse("Lab order not found", 404);
     const hospitalId = session.payload.hospitalId;
     const [patient, doctor, doctorProfile, prescription, consultation, appointment, report, bill] = await Promise.all([
@@ -80,7 +82,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     const body = labOrderUpdateSchema.parse(await req.json());
     await connectDb();
 
-    const order = await LabOrder.findOne({ hospitalId, labOrderId });
+    const filter: Record<string, unknown> = { hospitalId, labOrderId };
+    if (session.user.role === "DOCTOR") filter.doctorUserId = session.payload.userId;
+    const order = await LabOrder.findOne(filter);
     if (!order) return errorResponse("Lab order not found", 404);
     if (order.status !== "Ordered") return errorResponse("Only ordered lab orders can be edited", 409);
     if (body.priority !== undefined) order.priority = body.priority;

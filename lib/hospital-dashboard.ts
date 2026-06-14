@@ -34,6 +34,7 @@ export function getAllowedNavigationForRole(role: HospitalRole): HospitalNavigat
       { label: "Patients", route: `${base}/patients` },
       { label: "Appointments", route: `${base}/appointments` },
       { label: "Billing", route: `${base}/billing` },
+      ...(role === "HOSPITAL_OWNER" ? [{ label: "Subscription Billing", route: `${base}/subscription-billing` }] : []),
       { label: "Lab", route: `${base}/lab` },
       { label: "Pharmacy", route: `${base}/pharmacy` },
       { label: "Website Content", route: `${base}/content` },
@@ -59,6 +60,7 @@ export function getAllowedNavigationForRole(role: HospitalRole): HospitalNavigat
     const base = getDashboardRouteForRole(role);
     return [
       { label: "Overview", route: base },
+      { label: "Clinical Inbox", route: `${base}/inbox` },
       { label: "Queue", route: `${base}/queue` },
       { label: "Consultations", route: `${base}/consultations` },
       { label: "Prescriptions", route: `${base}/prescriptions` },
@@ -108,10 +110,14 @@ export function getAllowedNavigationForRole(role: HospitalRole): HospitalNavigat
       { label: "Overview", route: base },
       { label: "Profile", route: `${base}/profile` },
       { label: "Appointments", route: `${base}/appointments` },
+      { label: "Book Appointment", route: `${base}/book-appointment` },
+      { label: "Appointment Requests", route: `${base}/appointment-requests` },
       { label: "Prescriptions", route: `${base}/prescriptions` },
+      { label: "Lab Orders", route: `${base}/lab-orders` },
       { label: "Lab Reports", route: `${base}/lab-reports` },
       { label: "Bills", route: `${base}/bills` },
       { label: "Pharmacy History", route: `${base}/pharmacy` },
+      { label: "Medical History", route: `${base}/medical-history` },
     ];
   }
 

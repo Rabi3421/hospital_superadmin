@@ -7,7 +7,9 @@ import { requireHospitalPermission } from "@/lib/hospital-auth";
 import Appointment from "@/models/Appointment";
 import Consultation from "@/models/Consultation";
 import HospitalUser from "@/models/HospitalUser";
+import Hospital from "@/models/Hospital";
 import Patient from "@/models/Patient";
+import PharmacySale from "@/models/PharmacySale";
 import Prescription from "@/models/Prescription";
 
 const medicineSchema = z.object({
@@ -44,19 +46,23 @@ export async function GET(req: NextRequest, context: RouteContext) {
     assertDoctorOwnsRecord(session.user.role, session.payload.userId, prescription.doctorUserId);
 
     const hospitalId = session.payload.hospitalId;
-    const [consultation, appointment, patient, doctor] = await Promise.all([
+    const [consultation, appointment, patient, doctor, hospital, sale] = await Promise.all([
       Consultation.findOne({ hospitalId, consultationId: prescription.consultationId }),
       Appointment.findOne({ hospitalId, appointmentId: prescription.appointmentId }),
       Patient.findOne({ hospitalId, patientId: prescription.patientId }).select(
-        "patientId name phone email gender age bloodGroup status",
+        "patientId name phone email gender age bloodGroup allergies currentMedications status",
       ),
       HospitalUser.findOne({ hospitalId, _id: prescription.doctorUserId, role: "DOCTOR" }).select(
         "name email phone role status",
       ),
+      Hospital.findOne({ hospitalId }).select("hospitalId name address city state pincode ownerPhone logoUrl"),
+      PharmacySale.findOne({ hospitalId, prescriptionId, saleStatus: "Completed" }).select(
+        "saleId prescriptionId saleStatus createdAt",
+      ),
     ]);
 
     return successResponse(
-      serializeDoc({ ...prescription.toObject(), consultation, appointment, patient, doctor }),
+      serializeDoc({ ...prescription.toObject(), consultation, appointment, patient, doctor, hospital, sale, dispensed: Boolean(sale) }),
       "Prescription fetched",
     );
   } catch (error) {

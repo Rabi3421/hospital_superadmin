@@ -20,7 +20,10 @@ export async function POST(req: NextRequest, context: RouteContext) {
     const { hospitalId } = await context.params;
     const hospital = await Hospital.findOneAndUpdate(
       { hospitalId },
-      { status: "Suspended", websiteStatus: "Maintenance" },
+      {
+        $set: { status: "Suspended", websiteStatus: "Maintenance" },
+        $unset: { suspendedForNonPaymentAt: 1 },
+      },
       { new: true },
     );
 
@@ -28,7 +31,10 @@ export async function POST(req: NextRequest, context: RouteContext) {
       return errorResponse("Hospital not found", 404);
     }
 
-    await Subscription.findOneAndUpdate({ hospitalId }, { status: "Suspended" });
+    await Subscription.findOneAndUpdate(
+      { hospitalId },
+      { $set: { status: "Suspended" }, $unset: { suspendedForNonPaymentAt: 1 } },
+    );
     return successResponse(serializeDoc(hospital), "Hospital suspended");
   } catch (error) {
     return handleApiError(error);

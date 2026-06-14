@@ -9,14 +9,13 @@ type RouteContext = { params: Promise<{ slotId: string }> };
 export async function POST(req: NextRequest, context: RouteContext) {
   try {
     const session = await requireHospitalPermission(req, "doctor_slots_block");
-    if (session.user.role === "DOCTOR") {
-      throw new Error("Forbidden: doctors cannot block slots");
-    }
     const { slotId } = await context.params;
     const hospitalId = session.payload.hospitalId;
     await connectDb();
 
-    const slot = await AppointmentSlot.findOne({ hospitalId, slotId });
+    const filter: Record<string, unknown> = { hospitalId, slotId };
+    if (session.user.role === "DOCTOR") filter.doctorUserId = session.payload.userId;
+    const slot = await AppointmentSlot.findOne(filter);
     if (!slot) return errorResponse("Slot not found", 404);
     if (slot.status !== "Available") {
       return errorResponse(`Cannot block slot with status: ${slot.status}`, 409);

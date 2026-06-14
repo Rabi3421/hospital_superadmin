@@ -12,11 +12,18 @@ export interface HospitalDocument extends Document {
   ownerName: string;
   ownerPhone: string;
   ownerEmail: string;
+  referredBy?: string;
+  referralPartnerId?: string;
   address: string;
   city: string;
   state: string;
   pincode: string;
   logoUrl?: string;
+  description?: string;
+  heroImageUrl?: string;
+  publicPhone?: string;
+  publicEmail?: string;
+  mapEmbedUrl?: string;
   registrationNumber?: string;
   gstNumber?: string;
   websiteStatus: WebsiteStatus;
@@ -26,6 +33,7 @@ export interface HospitalDocument extends Document {
   trialEndDate?: Date;
   billingStartDate?: Date;
   nextBillingDate?: Date;
+  suspendedForNonPaymentAt?: Date;
   monthlyPrice: number;
   maxDoctors: number;
   maxStaff: number;
@@ -56,11 +64,18 @@ const hospitalSchema = new Schema<HospitalDocument>(
     ownerName: { type: String, required: true, trim: true },
     ownerPhone: { type: String, required: true, trim: true },
     ownerEmail: { type: String, required: true, unique: true, index: true, lowercase: true, trim: true },
+    referredBy: { type: String, default: "", trim: true },
+    referralPartnerId: { type: String, default: "", index: true, trim: true },
     address: { type: String, required: true, trim: true },
     city: { type: String, required: true, trim: true },
     state: { type: String, required: true, trim: true },
     pincode: { type: String, required: true, trim: true },
     logoUrl: { type: String, default: "" },
+    description: { type: String, default: "", trim: true },
+    heroImageUrl: { type: String, default: "" },
+    publicPhone: { type: String, default: "", trim: true },
+    publicEmail: { type: String, default: "", lowercase: true, trim: true },
+    mapEmbedUrl: { type: String, default: "" },
     registrationNumber: { type: String, default: "" },
     gstNumber: { type: String, default: "" },
     websiteStatus: {
@@ -75,11 +90,12 @@ const hospitalSchema = new Schema<HospitalDocument>(
       default: "Trial",
       required: true,
     },
-    subscriptionPlan: { type: String, default: "Trial" },
+    subscriptionPlan: { type: String, default: "Free Starter" },
     trialStartDate: { type: Date },
     trialEndDate: { type: Date },
     billingStartDate: { type: Date },
     nextBillingDate: { type: Date },
+    suspendedForNonPaymentAt: { type: Date },
     monthlyPrice: { type: Number, default: 0, min: 0 },
     maxDoctors: { type: Number, default: 5, min: 0 },
     maxStaff: { type: Number, default: 20, min: 0 },

@@ -28,9 +28,16 @@ export async function GET(req: NextRequest, context: RouteContext) {
     await connectDb();
 
     const patient = await Patient.findOne({ hospitalId, patientId }).select(
-      "patientId name phone email gender age bloodGroup status",
+      "patientId name phone email gender age dateOfBirth bloodGroup allergies currentMedications medicalHistory emergencyContactName emergencyContactPhone status",
     );
     if (!patient) return errorResponse("Patient not found", 404);
+    if (session.user.role === "DOCTOR") {
+      const assignedRecords = await Promise.all([
+        Appointment.exists({ hospitalId, patientId, doctorUserId: session.payload.userId }),
+        Consultation.exists({ hospitalId, patientId, doctorUserId: session.payload.userId }),
+      ]);
+      if (!assignedRecords.some(Boolean)) return errorResponse("Patient is not assigned to this doctor", 403);
+    }
 
     const permissions = resolveHospitalPermissions(session.user.role, session.user.permissions);
     const canViewBilling = permissions.includes("billing_view") || permissions.includes("hospital:*");

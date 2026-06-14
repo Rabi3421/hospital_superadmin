@@ -2,6 +2,8 @@ import jwt, { type Secret, type SignOptions } from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 import { connectDb } from "@/lib/db";
 import { resolveHospitalPermissions, type HospitalRole } from "@/lib/hospital-permissions";
+import { roleAllowedForHospital } from "@/lib/subscription-plans";
+import { reconcileSubscriptionBilling } from "@/lib/subscription-billing";
 import Hospital, { type HospitalDocument } from "@/models/Hospital";
 import HospitalUser, { type HospitalUserDocument } from "@/models/HospitalUser";
 
@@ -82,6 +84,7 @@ export async function getHospitalAuthSession(req: NextRequest): Promise<Hospital
   try {
     const payload = decodeHospitalToken(token);
     await connectDb();
+    await reconcileSubscriptionBilling(payload.hospitalId);
     const [user, hospital] = await Promise.all([
       HospitalUser.findOne({
         _id: payload.userId,
@@ -94,11 +97,48 @@ export async function getHospitalAuthSession(req: NextRequest): Promise<Hospital
       }),
     ]);
 
+    if (!user || !hospital || !roleAllowedForHospital(hospital, user.role)) return null;
+    return { payload, user, hospital };
+  } catch {
+    return null;
+  }
+}
+
+export async function getOwnerBillingAuthSession(req: NextRequest): Promise<HospitalAuthSession | null> {
+  const token = req.cookies.get(hospitalUserCookieName)?.value;
+  if (!token) return null;
+
+  try {
+    const payload = decodeHospitalToken(token);
+    await connectDb();
+    await reconcileSubscriptionBilling(payload.hospitalId);
+    const [user, hospital] = await Promise.all([
+      HospitalUser.findOne({
+        _id: payload.userId,
+        hospitalId: payload.hospitalId,
+        role: "HOSPITAL_OWNER",
+        status: "Active",
+      }),
+      Hospital.findOne({
+        hospitalId: payload.hospitalId,
+        status: "Suspended",
+        suspendedForNonPaymentAt: { $exists: true },
+      }),
+    ]);
+
     if (!user || !hospital) return null;
     return { payload, user, hospital };
   } catch {
     return null;
   }
+}
+
+export async function requireOwnerBillingAuth(req: NextRequest) {
+  const session = await getHospitalAuthSession(req) ?? await getOwnerBillingAuthSession(req);
+  if (!session || session.user.role !== "HOSPITAL_OWNER") {
+    throw new Error("Unauthorized owner billing session");
+  }
+  return session;
 }
 
 export async function requireHospitalAuth(req: NextRequest) {

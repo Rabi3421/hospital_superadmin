@@ -26,7 +26,7 @@ export default async function PlatformPaymentsPage({ searchParams }: { searchPar
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Platform Payments" description="Track hospital subscription payments to the platform owner." />
+      <PageHeader title="Platform Payments" description="Payments are due on the 5th. Access continues through the 10th and is suspended from the 11th until paid." />
       <section className="grid gap-4 sm:grid-cols-3">
         <SummaryCard label="Total Paid" value={`₹${total("Paid")}`} icon={WalletCards} />
         <SummaryCard label="Pending" value={`₹${total("Pending")}`} icon={CreditCard} tone="amber" />

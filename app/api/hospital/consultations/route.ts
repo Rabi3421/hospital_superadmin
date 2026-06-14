@@ -12,6 +12,8 @@ import {
 import { requireHospitalPermission } from "@/lib/hospital-auth";
 import Appointment from "@/models/Appointment";
 import Consultation from "@/models/Consultation";
+import Patient from "@/models/Patient";
+import Prescription from "@/models/Prescription";
 
 const vitalsSchema = z.object({
   temperature: z.string().optional(),
@@ -70,8 +72,33 @@ export async function GET(req: NextRequest) {
       Consultation.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
       Consultation.countDocuments(filter),
     ]);
+    const patientIds = [...new Set(consultations.map((consultation) => consultation.patientId).filter(Boolean))];
+    const appointmentIds = consultations.map((consultation) => consultation.appointmentId);
+    const consultationIds = consultations.map((consultation) => consultation.consultationId);
+    const [patients, appointments, prescriptions] = await Promise.all([
+      Patient.find({ hospitalId, patientId: { $in: patientIds } }).select(
+        "patientId name phone gender age bloodGroup allergies status",
+      ),
+      Appointment.find({ hospitalId, appointmentId: { $in: appointmentIds } }).select(
+        "appointmentId appointmentDate appointmentTime scheduledStartTime reason type status tokenNumber",
+      ),
+      Prescription.find({ hospitalId, consultationId: { $in: consultationIds }, status: { $ne: "Cancelled" } }).select(
+        "prescriptionId consultationId status issuedAt",
+      ),
+    ]);
+    const patientById = new Map(patients.map((patient) => [patient.patientId, patient]));
+    const appointmentById = new Map(appointments.map((appointment) => [appointment.appointmentId, appointment]));
+    const prescriptionByConsultationId = new Map(
+      prescriptions.map((prescription) => [prescription.consultationId, prescription]),
+    );
+    const enriched = consultations.map((consultation) => ({
+      ...consultation.toObject(),
+      patient: patientById.get(consultation.patientId) ?? null,
+      appointment: appointmentById.get(consultation.appointmentId) ?? null,
+      prescription: prescriptionByConsultationId.get(consultation.consultationId) ?? null,
+    }));
 
-    return successResponse(serializeDoc(consultations), "Consultations fetched", 200, {
+    return successResponse(serializeDoc(enriched), "Consultations fetched", 200, {
       page,
       limit,
       total,

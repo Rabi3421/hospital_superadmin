@@ -61,6 +61,10 @@ export function handleApiError(error: unknown) {
       return errorResponse(error.message, 403);
     }
 
+    if (error.message === "Hospital trial has expired") {
+      return errorResponse(error.message, 403);
+    }
+
     if (error.message === "Hospital not found") {
       return errorResponse(error.message, 404);
     }
@@ -70,6 +74,10 @@ export function handleApiError(error: unknown) {
     }
 
     if (error.message.startsWith("Cannot move appointment")) {
+      return errorResponse(error.message, 409);
+    }
+
+    if (error.message.startsWith("Subscription limit reached")) {
       return errorResponse(error.message, 409);
     }
 

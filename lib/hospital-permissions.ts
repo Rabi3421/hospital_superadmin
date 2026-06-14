@@ -233,7 +233,14 @@ export const hospitalPermissionsByRole: Record<HospitalRole, string[]> = {
     "lab_reports_view",
     "medicines_view",
     "doctor_availability_view",
+    "doctor_availability_create",
+    "doctor_availability_update",
+    "doctor_availability_cancel",
     "doctor_slots_view",
+    "doctor_slots_generate",
+    "doctor_slots_update",
+    "doctor_slots_block",
+    "doctor_slots_cancel",
     "doctor_queue_tracking_view",
     "clinical_records_view",
     "clinical_records_view_assigned",
@@ -339,5 +346,8 @@ export function getPermissionsForRole(role: HospitalRole) {
 }
 
 export function resolveHospitalPermissions(role: HospitalRole, storedPermissions?: string[] | null) {
+  if (role === "DOCTOR") {
+    return [...new Set([...getPermissionsForRole(role), ...(storedPermissions ?? [])])];
+  }
   return storedPermissions?.length ? storedPermissions : getPermissionsForRole(role);
 }

@@ -35,6 +35,9 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
     const appointment = await loadAppointmentForHospital(session.payload.hospitalId, appointmentId);
     if (!appointment) return errorResponse("Appointment not found", 404);
+    if (session.user.role === "DOCTOR" && appointment.doctorUserId !== session.payload.userId) {
+      return errorResponse("Appointment not found", 404);
+    }
 
     const [patient, doctor, department] = await Promise.all([
       Patient.findOne({ hospitalId: session.payload.hospitalId, patientId: appointment.patientId }).select(

@@ -15,6 +15,7 @@ type HospitalRow = {
   type: string;
   ownerName: string;
   ownerEmail: string;
+  referredBy?: string;
   city: string;
   state: string;
   status: string;
@@ -47,12 +48,13 @@ export default async function HospitalsPage() {
       </div>
       <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1220px] text-left text-sm">
+          <table className="w-full min-w-[1360px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-5 py-3">Hospital</th>
                 <th className="px-5 py-3">Type</th>
                 <th className="px-5 py-3">Owner</th>
+                <th className="px-5 py-3">Referred By</th>
                 <th className="px-5 py-3">Location</th>
                 <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3">Website</th>
@@ -76,6 +78,7 @@ export default async function HospitalsPage() {
                     {hospital.ownerName}
                     <p className="text-xs text-slate-500">{hospital.ownerEmail}</p>
                   </td>
+                  <td className="px-5 py-4 text-slate-700">{hospital.referredBy || "Not recorded"}</td>
                   <td className="px-5 py-4 text-slate-700">{hospital.city}, {hospital.state}</td>
                   <td className="px-5 py-4 text-slate-700">{hospital.status}</td>
                   <td className="px-5 py-4 text-slate-700">{hospital.websiteStatus}</td>
@@ -86,7 +89,7 @@ export default async function HospitalsPage() {
               ))}
               {hospitals.length === 0 ? (
                 <tr>
-                  <td className="px-5 py-8 text-center text-slate-500" colSpan={7}>
+                  <td className="px-5 py-8 text-center text-slate-500" colSpan={8}>
                     No hospitals created yet.
                   </td>
                 </tr>
