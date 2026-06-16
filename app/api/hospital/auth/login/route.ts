@@ -53,11 +53,13 @@ export async function POST(req: NextRequest) {
     });
     if (!user) return errorResponse("Invalid email or password", 401);
     if (user.status === "Blocked") return errorResponse("Hospital user account is blocked", 403);
-    const billingRecovery = Boolean(hospital.suspendedForNonPaymentAt);
-    if (billingRecovery && user.role !== "HOSPITAL_OWNER") {
-      return errorResponse("Hospital service is suspended for non-payment", 403);
+    if ((user.role as string) === "HOSPITAL_OWNER") {
+      return errorResponse("This role is no longer supported. Please contact the platform administrator.", 403);
     }
-    if (!billingRecovery && !roleAllowedForHospital(hospital, user.role)) {
+    if (Boolean(hospital.suspendedForNonPaymentAt)) {
+      return errorResponse("Hospital service is suspended for non-payment. Please contact the platform administrator.", 403);
+    }
+    if (!roleAllowedForHospital(hospital, user.role)) {
       return errorResponse(`The ${hospital.subscriptionPlan} plan does not include the ${user.role.replaceAll("_", " ").toLowerCase()} dashboard`, 403);
     }
 
@@ -87,7 +89,7 @@ export async function POST(req: NextRequest) {
         },
         role: user.role,
         permissions,
-        dashboardRoute: billingRecovery ? "/dashboard/owner/subscription-billing" : getDashboardRouteForRole(user.role),
+        dashboardRoute: getDashboardRouteForRole(user.role),
         ...patientState,
       }),
       "Hospital user logged in",

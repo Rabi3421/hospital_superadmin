@@ -92,9 +92,7 @@ export async function POST(req: NextRequest) {
       patientId: body.role === "PATIENT" ? body.patientId?.trim() : "",
       passwordHash,
       role: body.role,
-      permissions: body.permissions?.length && session.user.role === "HOSPITAL_OWNER"
-        ? body.permissions
-        : defaultPermissionsForHospitalUser(body.role),
+      permissions: defaultPermissionsForHospitalUser(body.role),
       status: body.status,
     });
 

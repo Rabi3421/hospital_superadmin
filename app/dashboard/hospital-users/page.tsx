@@ -28,7 +28,7 @@ export default async function HospitalUsersPage() {
       <section className="grid gap-4 sm:grid-cols-3">
         <SummaryCard label="Total Users" value={hospitalUsers.length} icon={UsersRound} />
         <SummaryCard label="Active Users" value={hospitalUsers.filter((user) => user.status === "Active").length} icon={UserRoundCheck} />
-        <SummaryCard label="Admin & Owner Accounts" value={hospitalUsers.filter((user) => ["HOSPITAL_ADMIN", "HOSPITAL_OWNER"].includes(user.role)).length} icon={ShieldCheck} tone="blue" />
+        <SummaryCard label="Admin Accounts" value={hospitalUsers.filter((user) => user.role === "HOSPITAL_ADMIN").length} icon={ShieldCheck} tone="blue" />
       </section>
       <HospitalUserManager hospitals={hospitalOptions} users={hospitalUsers} />
     </div>

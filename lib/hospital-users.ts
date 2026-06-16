@@ -35,9 +35,8 @@ export function defaultPermissionsForHospitalUser(role: HospitalRole) {
 }
 
 export function canManageHospitalUserRole(actorRole: HospitalRole, targetRole: HospitalRole) {
-  if (actorRole === "HOSPITAL_OWNER") return true;
-  if (actorRole !== "HOSPITAL_ADMIN") return false;
-  return targetRole !== "HOSPITAL_OWNER";
+  if (actorRole === "MANAGING_DIRECTOR") return true;
+  return actorRole === "HOSPITAL_ADMIN" && targetRole !== "MANAGING_DIRECTOR";
 }
 
 export function ensureCanManageHospitalUser(

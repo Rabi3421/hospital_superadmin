@@ -21,6 +21,7 @@ export default function NewHospitalForm({ initialReferralPartners }: { initialRe
   const [loading, setLoading] = useState(false);
   const [selectedPlanName, setSelectedPlanName] = useState(subscriptionPlans[0].name);
   const [selectedPrice, setSelectedPrice] = useState<number>(subscriptionPlans[0].priceOptions[0]);
+  const [websiteStatus, setWebsiteStatus] = useState<"Live" | "Coming Soon" | "Maintenance">("Live");
   const [referralPartners, setReferralPartners] = useState(initialReferralPartners);
   const [selectedReferralPartnerId, setSelectedReferralPartnerId] = useState("");
   const [addingReferralPartner, setAddingReferralPartner] = useState(false);
@@ -59,12 +60,13 @@ export default function NewHospitalForm({ initialReferralPartners }: { initialRe
       subscriptionPlan: value("subscriptionPlan"),
       monthlyPrice: value("monthlyPrice"),
       pricingNote: value("pricingNote"),
+      websiteStatus,
       initialUser: {
         name: value("ownerName"),
         email: value("ownerEmail"),
         phone: value("ownerPhone"),
         password: value("ownerPassword"),
-        role: "HOSPITAL_OWNER",
+        role: "HOSPITAL_ADMIN",
       },
     };
     try {
@@ -214,6 +216,18 @@ export default function NewHospitalForm({ initialReferralPartners }: { initialRe
             {selectedPrice > 0 && selectedPrice !== selectedPlan.priceOptions[0] ? (
               <Field name="pricingNote" label="Negotiation Approval Note" placeholder="Reason, approver, or agreed commercial terms" required />
             ) : null}
+            <label className="block">
+              <span className="text-sm font-medium text-slate-700">Website Status</span>
+              <select
+                value={websiteStatus}
+                onChange={(e) => setWebsiteStatus(e.target.value as typeof websiteStatus)}
+                className="mt-2 h-10 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-teal-600"
+              >
+                <option value="Live">Live</option>
+                <option value="Coming Soon">Coming Soon</option>
+                <option value="Maintenance">Maintenance</option>
+              </select>
+            </label>
             <div className="rounded-md border border-teal-100 bg-white p-4">
               <p className="text-lg font-bold text-slate-950">
                 {selectedPrice === 0 ? "Free for 30 days" : `₹${selectedPrice.toLocaleString("en-IN")}`}

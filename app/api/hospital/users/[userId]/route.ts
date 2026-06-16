@@ -91,9 +91,6 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     });
 
     if (body.permissions !== undefined) {
-      if (session.user.role !== "HOSPITAL_OWNER") {
-        return errorResponse("Only hospital owners can set custom permissions", 403);
-      }
       update.permissions = body.permissions;
     } else if (body.role && body.role !== target.role) {
       update.permissions = defaultPermissionsForHospitalUser(body.role);

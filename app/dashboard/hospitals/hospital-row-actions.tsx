@@ -29,8 +29,15 @@ export default function HospitalRowActions({
 
     setLoadingAction(action);
     const response = await fetch(`/api/superadmin/hospitals/${hospitalId}/${action}`, { method: "POST" });
+    const result = await response.json().catch(() => ({}));
     setLoadingAction("");
-    if (response.ok) router.refresh();
+
+    if (!response.ok) {
+      window.alert(result.message ?? `Unable to ${action} hospital. Please try again.`);
+      return;
+    }
+
+    router.refresh();
   }
 
   async function deleteHospital() {

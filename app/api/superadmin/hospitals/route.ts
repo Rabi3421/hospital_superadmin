@@ -22,7 +22,7 @@ const initialUserSchema = z.object({
   email: z.string().email().transform((value) => value.toLowerCase()),
   phone: z.string().min(6).optional().or(z.literal("")),
   password: z.string().min(8),
-  role: z.enum(["HOSPITAL_OWNER", "HOSPITAL_ADMIN"]).optional().default("HOSPITAL_OWNER"),
+  role: z.enum(["HOSPITAL_ADMIN"]).optional().default("HOSPITAL_ADMIN"),
 });
 
 const hospitalSchema = z.object({
@@ -43,6 +43,7 @@ const hospitalSchema = z.object({
   subscriptionPlan: z.enum(subscriptionPlanNames).default("Free Starter"),
   monthlyPrice: z.coerce.number().min(0),
   pricingNote: z.string().max(500).optional(),
+  websiteStatus: z.enum(["Live", "Maintenance", "Coming Soon"]).default("Live"),
   skipInitialUser: z.boolean().optional().default(false),
   initialUser: initialUserSchema.optional(),
   settings: z
@@ -58,7 +59,7 @@ const hospitalSchema = z.object({
   if (!body.skipInitialUser && !body.initialUser) {
     ctx.addIssue({
       code: "custom",
-      message: "Initial owner/admin user is required unless skipInitialUser is true",
+      message: "Initial admin user is required unless skipInitialUser is true",
       path: ["initialUser"],
     });
   }
@@ -184,7 +185,7 @@ export async function POST(req: NextRequest) {
       hospitalId,
       slug: await createUniqueSlug(body.name),
       status: "Trial" as const,
-      websiteStatus: "Coming Soon" as const,
+      websiteStatus: body.websiteStatus,
       trialStartDate: now,
       trialEndDate,
       settings: {
@@ -272,7 +273,7 @@ export async function POST(req: NextRequest) {
           hospitalId: hospital?.hospitalId,
           initialUserCreated: Boolean(initialUser),
           initialUserRole: initialUser?.role,
-          dashboardRoute: initialUser?.role === "HOSPITAL_ADMIN" ? "/dashboard/admin" : "/dashboard/owner",
+          dashboardRoute: "/dashboard/admin",
           nextSteps: [
             "Login with the initial hospital credential",
             "Complete the hospital profile and settings",

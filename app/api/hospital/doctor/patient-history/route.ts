@@ -13,7 +13,7 @@ import Prescription from "@/models/Prescription";
 export async function GET(req: NextRequest) {
   try {
     const session = await requireHospitalAuth(req);
-    if (!["DOCTOR", "HOSPITAL_OWNER", "HOSPITAL_ADMIN"].includes(session.user.role)) {
+    if (!["DOCTOR", "HOSPITAL_ADMIN"].includes(session.user.role)) {
       throw new Error("Forbidden: doctor patient history is not available for this role");
     }
     const permissions = resolveHospitalPermissions(session.user.role, session.user.permissions);

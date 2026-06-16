@@ -93,7 +93,6 @@ export async function getSetupProgress(hospitalId: string) {
   if (!hospital) throw new Error("Hospital not found for this hospital");
 
   const [
-    ownerCredentialCreated,
     departments,
     doctorUsers,
     doctorProfiles,
@@ -104,7 +103,6 @@ export async function getSetupProgress(hospitalId: string) {
     labOrders,
     pharmacySales,
   ] = await Promise.all([
-    HospitalUser.exists({ hospitalId, role: "HOSPITAL_OWNER", status: "Active" }),
     HospitalDepartment.countDocuments({ hospitalId, status: "Active" }),
     HospitalUser.countDocuments({ hospitalId, role: "DOCTOR", status: "Active" }),
     HospitalDoctorPublicProfile.countDocuments({ hospitalId, status: "Active" }),
@@ -117,8 +115,7 @@ export async function getSetupProgress(hospitalId: string) {
   ]);
 
   const items = [
-    ["hospitalProfileCompleted", "Complete hospital profile", Boolean(hospital.name && hospital.ownerName && hospital.ownerPhone && hospital.address), "Add the hospital identity, owner contact, and address."],
-    ["ownerCredentialCreated", "Create owner credential", Boolean(ownerCredentialCreated), "Create an active HOSPITAL_OWNER user."],
+    ["hospitalProfileCompleted", "Complete hospital profile", Boolean(hospital.name && hospital.ownerName && hospital.ownerPhone && hospital.address), "Add the hospital identity, contact, and address."],
     ["atLeastOneDepartment", "Add a department", departments > 0, "Create at least one active department."],
     ["atLeastOneDoctorUser", "Add a doctor login", doctorUsers > 0, "Create at least one active DOCTOR user."],
     ["atLeastOneDoctorProfile", "Publish a doctor profile", doctorProfiles > 0, "Create at least one active public doctor profile."],

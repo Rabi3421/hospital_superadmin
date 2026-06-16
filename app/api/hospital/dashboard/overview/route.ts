@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     const today = dateRangeFor(new Date());
     await connectDb();
 
-    if (["HOSPITAL_OWNER", "HOSPITAL_ADMIN"].includes(session.user.role)) {
+    if (session.user.role === "HOSPITAL_ADMIN") {
       const [
         totalPatients,
         activePatients,

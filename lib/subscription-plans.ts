@@ -1,8 +1,8 @@
 import type { HospitalRole } from "@/lib/hospital-permissions";
 
 const allDashboardRoles: HospitalRole[] = [
-  "HOSPITAL_OWNER",
   "HOSPITAL_ADMIN",
+  "MANAGING_DIRECTOR",
   "RECEPTIONIST",
   "DOCTOR",
   "NURSE",
@@ -25,13 +25,13 @@ export const subscriptionPlans = [
   },
   {
     name: "Core Care",
-    description: "Focused plan for hospitals using owner, doctor, and patient dashboards.",
+    description: "Focused plan for hospitals using admin, doctor, and patient dashboards.",
     priceOptions: [3000, 2000],
     maxDoctors: 20,
     maxStaff: 25,
     maxPatients: 15000,
-    allowedRoles: ["HOSPITAL_OWNER", "DOCTOR", "PATIENT"] satisfies HospitalRole[],
-    features: ["Hospital owner dashboard", "Doctor dashboard", "Patient dashboard"],
+    allowedRoles: ["HOSPITAL_ADMIN", "DOCTOR", "PATIENT"] satisfies HospitalRole[],
+    features: ["Hospital admin dashboard", "Doctor dashboard", "Patient dashboard"],
   },
   {
     name: "Complete Care",

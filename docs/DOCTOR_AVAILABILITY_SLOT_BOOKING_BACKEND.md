@@ -271,7 +271,7 @@ Body:
 
 ### `POST /api/hospital/reception/appointments/book-slot`
 
-Auth: RECEPTIONIST, HOSPITAL_OWNER, HOSPITAL_ADMIN.
+Auth: RECEPTIONIST, HOSPITAL_ADMIN.
 
 Body:
 ```json

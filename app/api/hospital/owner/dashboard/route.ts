@@ -1,13 +1,5 @@
-import { NextRequest } from "next/server";
-import { handleApiError, serializeDoc, successResponse } from "@/lib/api-response";
-import { requireHospitalPermission } from "@/lib/hospital-auth";
-import { getManagementDashboard } from "@/lib/hospital-management";
+import { NextResponse } from "next/server";
 
-export async function GET(req: NextRequest) {
-  try {
-    const session = await requireHospitalPermission(req, "owner_dashboard_view");
-    return successResponse(serializeDoc(await getManagementDashboard(session.payload.hospitalId, true)), "Owner dashboard fetched");
-  } catch (error) {
-    return handleApiError(error);
-  }
+export async function GET() {
+  return NextResponse.json({ error: "This endpoint has been removed." }, { status: 410 });
 }

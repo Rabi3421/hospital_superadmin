@@ -7,8 +7,8 @@ export type HospitalNavigationItem = {
 
 export function getDashboardRouteForRole(role: HospitalRole) {
   const routes: Record<HospitalRole, string> = {
-    HOSPITAL_OWNER: "/dashboard/owner",
     HOSPITAL_ADMIN: "/dashboard/admin",
+    MANAGING_DIRECTOR: "/dashboard/director",
     RECEPTIONIST: "/dashboard/receptionist",
     DOCTOR: "/dashboard/doctor",
     NURSE: "/dashboard/nurse",
@@ -22,7 +22,7 @@ export function getDashboardRouteForRole(role: HospitalRole) {
 }
 
 export function getAllowedNavigationForRole(role: HospitalRole): HospitalNavigationItem[] {
-  if (role === "HOSPITAL_OWNER" || role === "HOSPITAL_ADMIN") {
+  if (role === "HOSPITAL_ADMIN") {
     const base = getDashboardRouteForRole(role);
     return [
       { label: "Overview", route: base },
@@ -34,7 +34,29 @@ export function getAllowedNavigationForRole(role: HospitalRole): HospitalNavigat
       { label: "Patients", route: `${base}/patients` },
       { label: "Appointments", route: `${base}/appointments` },
       { label: "Billing", route: `${base}/billing` },
-      ...(role === "HOSPITAL_OWNER" ? [{ label: "Subscription Billing", route: `${base}/subscription-billing` }] : []),
+      { label: "Lab", route: `${base}/lab` },
+      { label: "Pharmacy", route: `${base}/pharmacy` },
+      { label: "Website Content", route: `${base}/content` },
+      { label: "Reports", route: `${base}/reports` },
+      { label: "Settings", route: `${base}/settings` },
+    ];
+  }
+
+  if (role === "MANAGING_DIRECTOR") {
+    const base = getDashboardRouteForRole(role);
+    return [
+      { label: "Overview", route: base },
+      { label: "Setup", route: `${base}/setup` },
+      { label: "Hospital Profile", route: `${base}/profile` },
+      { label: "Staff Users", route: `${base}/users` },
+      { label: "Departments", route: `${base}/departments` },
+      { label: "Doctor Profiles", route: `${base}/doctors` },
+      { label: "Doctor Slots", route: `${base}/open-slots` },
+      { label: "Patients", route: `${base}/patients` },
+      { label: "Appointments", route: `${base}/appointments` },
+      { label: "Queue Tracking", route: `${base}/queue-tracking` },
+      { label: "Patient Records", route: `${base}/records` },
+      { label: "Billing", route: `${base}/billing` },
       { label: "Lab", route: `${base}/lab` },
       { label: "Pharmacy", route: `${base}/pharmacy` },
       { label: "Website Content", route: `${base}/content` },
@@ -122,8 +144,8 @@ export function getAllowedNavigationForRole(role: HospitalRole): HospitalNavigat
   }
 
   const navigation: Record<HospitalRole, string[]> = {
-    HOSPITAL_OWNER: [],
     HOSPITAL_ADMIN: [],
+    MANAGING_DIRECTOR: [],
     RECEPTIONIST: [],
     DOCTOR: [],
     NURSE: ["Overview", "Patients", "Vitals", "Appointments"],

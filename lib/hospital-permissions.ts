@@ -1,6 +1,6 @@
 export const hospitalRoles = [
-  "HOSPITAL_OWNER",
   "HOSPITAL_ADMIN",
+  "MANAGING_DIRECTOR",
   "RECEPTIONIST",
   "DOCTOR",
   "NURSE",
@@ -29,7 +29,6 @@ export const hospitalOperationalPermissions = [
   "website_content_create",
   "website_content_update",
   "website_content_delete",
-  "owner_dashboard_view",
   "admin_dashboard_view",
   "setup_progress_view",
   "patients_view",
@@ -160,14 +159,22 @@ export const hospitalOperationalPermissions = [
 export type HospitalPermission = (typeof hospitalOperationalPermissions)[number] | string;
 
 export const hospitalPermissionsByRole: Record<HospitalRole, string[]> = {
-  HOSPITAL_OWNER: ["hospital:*", ...hospitalOperationalPermissions],
   HOSPITAL_ADMIN: [
     "hospital:manage",
     "users:manage",
     "reports:view",
     "clinical_records_view_all",
     "patient_records_view_all",
-    ...hospitalOperationalPermissions.filter((permission) => permission !== "owner_dashboard_view"),
+    ...hospitalOperationalPermissions,
+  ],
+  MANAGING_DIRECTOR: [
+    "hospital:manage",
+    "users:manage",
+    "director_dashboard_view",
+    "reports:view",
+    ...hospitalOperationalPermissions,
+    "clinical_records_view_all",
+    "patient_records_view_all",
   ],
   RECEPTIONIST: [
     "patients_view",

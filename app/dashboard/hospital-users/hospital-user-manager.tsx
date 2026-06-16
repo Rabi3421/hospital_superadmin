@@ -17,7 +17,7 @@ type HospitalUserRow = {
   status: string;
 };
 
-const roles = ["HOSPITAL_OWNER", "HOSPITAL_ADMIN", "RECEPTIONIST", "DOCTOR", "NURSE", "PHARMACIST", "LAB_TECHNICIAN", "ACCOUNTANT", "PATIENT"];
+const roles = ["HOSPITAL_ADMIN", "MANAGING_DIRECTOR", "RECEPTIONIST", "DOCTOR", "NURSE", "PHARMACIST", "LAB_TECHNICIAN", "ACCOUNTANT", "PATIENT"];
 
 export default function HospitalUserManager({ hospitals, users }: { hospitals: HospitalOption[]; users: HospitalUserRow[] }) {
   const router = useRouter();
