@@ -117,7 +117,7 @@ export default function NewHospitalForm({ initialReferralPartners }: { initialRe
 
   return (
     <form onSubmit={onSubmit} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="grid gap-6 p-5 xl:grid-cols-[1fr_340px]">
+      <div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_340px]">
         <div className="space-y-6">
           <Section title="Hospital profile" description="Core tenant details used across billing, public pages, and internal management.">
             <Field name="name" label="Hospital Name" required />

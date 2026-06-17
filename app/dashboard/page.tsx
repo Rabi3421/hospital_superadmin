@@ -92,24 +92,24 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#151918]">Welcome back, {admin.name?.split(" ")[0] ?? "Admin"}</h1>
-          <p className="mt-1 text-sm font-medium text-[#7a8581]">Here is the latest update for your hospital SaaS platform.</p>
+          <h1 className="text-xl font-bold tracking-tight text-[#151918] sm:text-2xl">Welcome back, {admin.name?.split(" ")[0] ?? "Admin"}</h1>
+          <p className="mt-1 text-sm font-medium text-[#7a8581]">Latest update for your hospital SaaS platform.</p>
         </div>
-        <div className="flex gap-3">
-          <select className="h-11 rounded-none border border-[#dfe8e4] bg-white px-4 text-sm font-bold text-[#394340] outline-none">
+        <div className="flex gap-2 sm:gap-3">
+          <select className="h-10 rounded-md border border-[#dfe8e4] bg-white px-3 text-sm font-bold text-[#394340] outline-none sm:h-11">
             <option>Last Week</option>
             <option>This Month</option>
           </select>
-          <button className="inline-flex h-11 items-center gap-2 bg-[#151918] px-5 text-sm font-bold text-white" type="button">
-            <Download size={17} />
+          <button className="inline-flex h-10 items-center gap-2 rounded-md bg-[#151918] px-4 text-sm font-bold text-white sm:h-11 sm:px-5" type="button">
+            <Download size={16} />
             Export
           </button>
         </div>
       </div>
 
-      <section className="grid gap-5 xl:grid-cols-4">
+      <section className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <div className="relative overflow-hidden rounded-lg bg-[#278b7c] p-5 text-white shadow-[0_18px_45px_rgba(31,123,111,0.18)]">
           <div className="absolute -right-4 top-0 text-[160px] font-black leading-none text-white/5">W</div>
           <div className="relative flex items-start justify-between">
@@ -122,7 +122,7 @@ export default async function DashboardPage() {
             <MoreHorizontal size={20} />
           </div>
           <div className="relative mt-5 flex items-center gap-3">
-            <p className="text-4xl font-bold">{totalHospitals}</p>
+            <p className="text-3xl font-bold sm:text-4xl">{totalHospitals}</p>
             <span className="rounded-full bg-white/20 px-2.5 py-1 text-xs font-bold">+15.2%</span>
           </div>
           <p className="relative mt-4 max-w-[260px] text-sm font-medium leading-6 text-white/85">
@@ -174,7 +174,7 @@ export default async function DashboardPage() {
         </MetricCard>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+      <section className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 sm:gap-4">
         <MiniStat label="Trial" value={trialHospitals} />
         <MiniStat label="Suspended" value={suspendedHospitals} />
         <MiniStat label="Cancelled" value={cancelledHospitals} />
@@ -186,7 +186,7 @@ export default async function DashboardPage() {
         <MiniStat label="New This Month" value={newHospitalsThisMonth} />
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[1fr_380px]">
+      <section className="grid gap-4 sm:gap-5 lg:grid-cols-[1fr_360px]">
         <div className="rounded-lg border border-[#edf2ef] bg-white p-5 shadow-[0_16px_40px_rgba(32,45,39,0.04)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -200,20 +200,22 @@ export default async function DashboardPage() {
               <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#ffd467]" />Users</span>
             </div>
           </div>
-          <div className="mt-8 flex h-[230px] items-end justify-between gap-4">
-            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, index) => {
-              const hospitalHeight = Math.max(22, (chartValues[index] / maxChart) * 100);
-              const userHeight = Math.max(16, ((chartValues[index] + totalUsers) / (maxChart + Math.max(totalUsers, 1))) * 80);
-              return (
-                <div key={day} className="flex flex-1 flex-col items-center gap-3">
-                  <div className="flex h-44 items-end gap-2">
-                    <div className="w-7 rounded-t-sm bg-[#278b7c]" style={{ height: `${hospitalHeight}%` }} />
-                    <div className="w-7 rounded-t-sm bg-[#ffd467]" style={{ height: `${userHeight}%` }} />
+          <div className="mt-6 sm:mt-8">
+            <div className="flex h-[180px] items-end justify-between gap-1 sm:h-[230px] sm:gap-4">
+              {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, index) => {
+                const hospitalHeight = Math.max(22, (chartValues[index] / maxChart) * 100);
+                const userHeight = Math.max(16, ((chartValues[index] + totalUsers) / (maxChart + Math.max(totalUsers, 1))) * 80);
+                return (
+                  <div key={day} className="flex flex-1 flex-col items-center gap-1.5 sm:gap-3">
+                    <div className="flex h-32 items-end gap-0.5 sm:h-44 sm:gap-2">
+                      <div className="w-3 rounded-t-sm bg-[#278b7c] sm:w-7" style={{ height: `${hospitalHeight}%` }} />
+                      <div className="w-3 rounded-t-sm bg-[#ffd467] sm:w-7" style={{ height: `${userHeight}%` }} />
+                    </div>
+                    <span className="text-[9px] font-semibold text-[#7a8581] sm:text-xs">{day}</span>
                   </div>
-                  <span className="text-xs font-semibold text-[#7a8581]">{day}</span>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -230,7 +232,7 @@ export default async function DashboardPage() {
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#5aa7f2]" />Active</span>
             </div>
           </div>
-          <div className="mt-6 grid grid-cols-[1fr_150px] gap-5">
+          <div className="mt-5 grid gap-4 sm:mt-6 sm:grid-cols-[1fr_140px] sm:gap-5">
             <div>
               <div className="mb-4 flex items-center justify-between text-sm font-bold text-[#151918]">
                 <span>June 2026</span>
@@ -271,10 +273,26 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <section className="rounded-lg border border-[#edf2ef] bg-white p-5 shadow-[0_16px_40px_rgba(32,45,39,0.04)]">
+      <section className="rounded-lg border border-[#edf2ef] bg-white p-4 shadow-[0_16px_40px_rgba(32,45,39,0.04)] sm:p-5">
         <h2 className="text-base font-bold text-[#151918]">Recent Platform Payments</h2>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-sm">
+        {/* Mobile cards */}
+        <div className="mt-4 space-y-2 sm:hidden">
+          {(serializeDoc(recentPayments) as unknown as Array<{ _id: string; hospitalId: string; amount: number; status: string; billingMonth: string }>).map((payment) => (
+            <div key={payment._id} className="flex items-center justify-between rounded-md border border-[#eef2f0] px-3 py-3">
+              <div>
+                <p className="text-xs font-bold text-[#151918]">{payment.hospitalId}</p>
+                <p className="mt-0.5 text-xs font-medium text-[#8a9591]">{payment.billingMonth}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-bold text-[#151918]">₹{payment.amount}</p>
+                <p className="mt-0.5 text-[10px] font-semibold text-[#8a9591]">{payment.status}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Desktop table */}
+        <div className="mt-4 hidden overflow-x-auto sm:block">
+          <table className="w-full min-w-[500px] text-left text-sm">
             <tbody className="divide-y divide-[#eef2f0]">
               {(serializeDoc(recentPayments) as unknown as Array<{ _id: string; hospitalId: string; amount: number; status: string; billingMonth: string }>).map((payment) => (
                 <tr key={payment._id}>
@@ -289,78 +307,85 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <section className="rounded-lg border border-[#edf2ef] bg-white p-5 shadow-[0_16px_40px_rgba(32,45,39,0.04)]">
-        <div className="flex flex-col justify-between gap-4 border-b border-[#eef2f0] pb-4 md:flex-row md:items-center">
+      <section className="rounded-lg border border-[#edf2ef] bg-white p-4 shadow-[0_16px_40px_rgba(32,45,39,0.04)] sm:p-5">
+        <div className="flex flex-col justify-between gap-3 border-b border-[#eef2f0] pb-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-3">
             <span className="flex h-8 w-8 items-center justify-center rounded-md bg-[#edf8f3] text-[#278b7c]">
               <UsersRound size={17} />
             </span>
             <h2 className="text-base font-bold text-[#151918]">All Hospitals</h2>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <div className="flex h-10 min-w-[280px] items-center gap-2 rounded-md border border-[#dfe8e4] px-3 text-sm font-medium text-[#8a9591]">
-              <Search size={17} />
-              Search anything here
+          <div className="flex gap-2">
+            <div className="flex h-10 flex-1 items-center gap-2 rounded-md border border-[#dfe8e4] px-3 text-sm font-medium text-[#8a9591] sm:min-w-[220px]">
+              <Search size={16} />
+              <span className="truncate">Search anything</span>
             </div>
-            <button type="button" className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#dfe8e4] px-4 text-sm font-bold text-[#151918]">
-              <SlidersHorizontal size={16} />
-              Filter
+            <button type="button" className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md border border-[#dfe8e4] px-3 text-sm font-bold text-[#151918]">
+              <SlidersHorizontal size={15} />
+              <span className="hidden sm:inline">Filter</span>
             </button>
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[860px] text-left text-sm">
+
+        {/* Mobile cards */}
+        <div className="mt-4 space-y-2 sm:hidden">
+          {hospitals.map((hospital, index) => (
+            <Link key={hospital.hospitalId} href={`/dashboard/hospitals/${hospital.hospitalId}`} className="flex items-center justify-between rounded-md border border-[#eef2f0] px-3 py-3 hover:bg-[#f8fbfa]">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#dfe8e4] text-[#8a9591]"><UserRound size={15} /></span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-[#151918]">{hospital.name}</p>
+                  <p className="text-xs font-medium text-[#8a9591]">{hospital.city ?? "—"} · {hospital.type ?? "Hospital"}</p>
+                </div>
+              </div>
+              <span className={`ml-2 shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
+                hospital.status === "Active" ? "bg-[#e2f6f1] text-[#278b7c]" : hospital.status === "Suspended" ? "bg-[#fde8df] text-[#c06a3f]" : "bg-[#fff2d6] text-[#b88719]"
+              }`}>{hospital.status}</span>
+            </Link>
+          ))}
+          {hospitals.length === 0 && <p className="py-8 text-center text-sm font-semibold text-[#8a9591]">No hospitals created yet.</p>}
+        </div>
+
+        {/* Desktop table */}
+        <div className="mt-4 hidden overflow-x-auto sm:block">
+          <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="text-xs font-bold text-[#9aa5a1]">
               <tr>
-                <th className="px-4 py-4">No</th>
-                <th className="px-4 py-4">ID Code</th>
-                <th className="px-4 py-4">Hospital Name</th>
-                <th className="px-4 py-4">City</th>
-                <th className="px-4 py-4">Type</th>
-                <th className="px-4 py-4">Status</th>
-                <th className="px-4 py-4" />
+                <th className="px-4 py-3">No</th>
+                <th className="px-4 py-3">Hospital Name</th>
+                <th className="px-4 py-3">City</th>
+                <th className="px-4 py-3">Type</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-[#eef2f0]">
               {hospitals.map((hospital, index) => (
-                <tr key={hospital.hospitalId}>
-                  <td className="px-4 py-4 font-bold text-[#151918]">{String(index + 1).padStart(2, "0")}</td>
-                  <td className="px-4 py-4 font-bold text-[#151918]">{hospital.hospitalId}</td>
-                  <td className="px-4 py-4">
-                    <Link href={`/dashboard/hospitals/${hospital.hospitalId}`} className="font-medium text-slate-950">
+                <tr key={hospital.hospitalId} className="hover:bg-[#f8fbfa]">
+                  <td className="px-4 py-3.5 font-bold text-[#151918]">{String(index + 1).padStart(2, "0")}</td>
+                  <td className="px-4 py-3.5">
+                    <Link href={`/dashboard/hospitals/${hospital.hospitalId}`}>
                       <span className="inline-flex items-center gap-3 font-bold text-[#151918]">
                         <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#dfe8e4]">
-                          <UserRound size={16} />
+                          <UserRound size={15} />
                         </span>
                         {hospital.name}
                       </span>
                     </Link>
                   </td>
-                  <td className="px-4 py-4 font-semibold text-[#394340]">{hospital.city ?? "N/A"}</td>
-                  <td className="px-4 py-4 font-semibold text-[#394340]">{hospital.type ?? "Hospital"}</td>
-                  <td className="px-4 py-4">
-                    <span className={`rounded-full px-4 py-1.5 text-xs font-bold ${
-                      hospital.status === "Active"
-                        ? "bg-[#e2f6f1] text-[#278b7c]"
-                        : hospital.status === "Suspended"
-                          ? "bg-[#fde8df] text-[#c06a3f]"
-                          : "bg-[#fff2d6] text-[#b88719]"
-                    }`}>
-                      {hospital.status}
-                    </span>
+                  <td className="px-4 py-3.5 font-semibold text-[#394340]">{hospital.city ?? "N/A"}</td>
+                  <td className="px-4 py-3.5 font-semibold text-[#394340]">{hospital.type ?? "Hospital"}</td>
+                  <td className="px-4 py-3.5">
+                    <span className={`rounded-full px-3 py-1.5 text-xs font-bold ${
+                      hospital.status === "Active" ? "bg-[#e2f6f1] text-[#278b7c]" : hospital.status === "Suspended" ? "bg-[#fde8df] text-[#c06a3f]" : "bg-[#fff2d6] text-[#b88719]"
+                    }`}>{hospital.status}</span>
                   </td>
-                  <td className="px-4 py-4 text-right text-[#8a9591]">
-                    <MoreHorizontal size={19} />
-                  </td>
+                  <td className="px-4 py-3.5 text-right text-[#8a9591]"><MoreHorizontal size={18} /></td>
                 </tr>
               ))}
-              {hospitals.length === 0 ? (
-                <tr>
-                  <td className="px-4 py-10 text-center font-semibold text-[#8a9591]" colSpan={7}>
-                    No hospitals created yet.
-                  </td>
-                </tr>
-              ) : null}
+              {hospitals.length === 0 && (
+                <tr><td className="px-4 py-10 text-center font-semibold text-[#8a9591]" colSpan={6}>No hospitals created yet.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -371,9 +396,9 @@ export default async function DashboardPage() {
 
 function MiniStat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-lg border border-[#edf2ef] bg-white p-4">
-      <p className="text-xs font-bold text-[#8a9591]">{label}</p>
-      <p className="mt-2 text-2xl font-bold text-[#151918]">{value}</p>
+    <div className="rounded-lg border border-[#edf2ef] bg-white p-3 sm:p-4">
+      <p className="text-[10px] font-bold uppercase tracking-wide text-[#8a9591] sm:text-xs">{label}</p>
+      <p className="mt-1.5 text-xl font-bold text-[#151918] sm:mt-2 sm:text-2xl">{value}</p>
     </div>
   );
 }
@@ -403,7 +428,7 @@ function MetricCard({
         <MoreHorizontal className="text-[#8a9591]" size={20} />
       </div>
       <div className="mt-5 flex items-center gap-3">
-        <p className="text-4xl font-bold tracking-tight text-[#151918]">{value}</p>
+        <p className="text-3xl font-bold tracking-tight text-[#151918] sm:text-4xl">{value}</p>
         <span className="rounded-full bg-[#dff8ef] px-2.5 py-1 text-xs font-bold text-[#278b7c]">{badge}</span>
       </div>
       {children}

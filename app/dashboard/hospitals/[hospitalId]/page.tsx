@@ -136,7 +136,7 @@ export default async function HospitalDetailPage({ params }: PageProps) {
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <InfoCard title="Hospital Profile" icon={<Building2 size={18} />}>
           <Info label="Type" value={hospital.type} />
           <Info label="Location" value={`${hospital.city}, ${hospital.state}`} />

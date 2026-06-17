@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="en" className="h-full overflow-x-hidden antialiased">
       <body className="min-h-full bg-slate-50 text-slate-950">{children}</body>
     </html>
   );

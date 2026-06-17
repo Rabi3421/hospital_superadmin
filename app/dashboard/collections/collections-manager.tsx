@@ -103,7 +103,7 @@ export default function CollectionsManager({ rows }: { rows: CollectionRow[] }) 
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold text-[#151918]">Collections center</h1><p className="mt-1 text-sm font-medium text-[#7a8581]">Manage receivables, verify owner-submitted payments, track reminders, and follow overdue accounts.</p></div>
       {(feedback || error) ? <div className={`rounded-lg border px-4 py-3 text-sm font-semibold ${error ? "border-red-200 bg-red-50 text-red-700" : "border-[#cde9df] bg-[#edf8f3] text-[#278b7c]"}`}>{error || feedback}</div> : null}
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryCard label="Outstanding Receivable" value={`₹${receivable.toLocaleString("en-IN")}`} icon={WalletCards} />
         <SummaryCard label="Pending Verification" value={pending} icon={Clock3} tone="amber" />
         <SummaryCard label="In Grace Period" value={grace} icon={BellRing} tone="amber" />
@@ -114,7 +114,7 @@ export default function CollectionsManager({ rows }: { rows: CollectionRow[] }) 
         <select value={stage} onChange={(event) => setStage(event.target.value)} className="h-10 rounded-md border border-[#dfe8e4] px-3 text-sm font-semibold"><option value="">All collection stages</option>{["Upcoming", "Due", "Grace", "Suspended", "Paid", "Trial", "Pending Verification"].map((item) => <option key={item}>{item}</option>)}</select>
       </section>
       <section className="overflow-x-auto rounded-lg border border-[#e2eae6] bg-white shadow-[0_12px_32px_rgba(32,45,39,0.04)]">
-        <table className="w-full min-w-[1280px] text-left text-sm">
+        <table className="w-full min-w-[760px] text-left text-sm">
           <thead className="border-b border-[#edf2ef] bg-[#f8faf9] text-[11px] font-bold uppercase text-[#8a9591]"><tr><th className="px-4 py-4">Hospital</th><th className="px-4 py-4">Plan / Month</th><th className="px-4 py-4">Due Timeline</th><th className="px-4 py-4">Stage</th><th className="px-4 py-4">Receivable</th><th className="px-4 py-4">Payment Submission</th><th className="px-4 py-4">Reminders</th><th className="px-4 py-4 text-right">Actions</th></tr></thead>
           <tbody className="divide-y divide-[#edf2ef]">{filtered.map((row) => <tr key={row.hospital?.hospitalId} className="hover:bg-[#fbfdfc]">
             <td className="px-4 py-4"><Link href={`/dashboard/hospitals/${row.hospital?.hospitalId}`} className="font-bold text-[#151918] hover:text-[#278b7c]">{row.hospital?.name}</Link><p className="mt-1 text-xs text-[#8a9591]">{row.hospital?.ownerEmail}</p></td>

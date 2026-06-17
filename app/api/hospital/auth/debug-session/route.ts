@@ -20,7 +20,6 @@ export async function GET(req: NextRequest) {
         userId: payload.userId,
         hospitalId: payload.hospitalId,
         role: payload.role,
-        permissions: payload.permissions,
         issuedAt: payload.iat,
         expiresAt: payload.exp,
       },

@@ -16,7 +16,7 @@ export function ContentTable({ headers, rows, statusIndex }: { headers: string[]
   return (
     <section className="overflow-x-auto rounded-lg border border-[#e2eae6] bg-white shadow-[0_12px_32px_rgba(32,45,39,0.04)]">
       {rows.length ? (
-        <table className="w-full min-w-[800px] text-left text-sm">
+        <table className="w-full min-w-[600px] text-left text-sm">
           <thead className="border-b border-[#edf2ef] bg-[#f8faf9] text-[11px] font-bold uppercase text-[#8a9591]"><tr>{headers.map((header) => <th key={header} className="px-5 py-4">{header}</th>)}</tr></thead>
           <tbody className="divide-y divide-[#edf2ef]">
             {rows.map((row, index) => (

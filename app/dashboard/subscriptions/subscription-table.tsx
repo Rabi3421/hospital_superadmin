@@ -123,7 +123,7 @@ export default function SubscriptionTable({ subscriptions }: { subscriptions: Su
       ) : null}
 
       <section className="overflow-x-auto rounded-lg border border-[#e2eae6] bg-white shadow-[0_12px_32px_rgba(32,45,39,0.04)]">
-        <table className="w-full min-w-[1020px] text-left text-sm">
+        <table className="w-full min-w-[700px] text-left text-sm">
           <thead className="border-b border-[#edf2ef] bg-[#f8faf9] text-[11px] font-bold uppercase text-[#8a9591]">
             <tr>
               <th className="px-5 py-4">Hospital</th>

@@ -62,7 +62,7 @@ export default function EditHospitalForm({ hospital, referralPartners }: { hospi
 
   return (
     <form onSubmit={onSubmit} className="overflow-hidden rounded-lg border border-[#edf2ef] bg-white shadow-sm">
-      <div className="grid gap-6 p-5 xl:grid-cols-[1fr_340px]">
+      <div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_340px]">
         <div className="space-y-6">
           <Section title="Hospital profile" description="Core hospital information shown across the superadmin dashboard.">
             <Field name="name" label="Hospital Name" defaultValue={hospital.name} required />

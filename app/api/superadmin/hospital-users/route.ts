@@ -52,6 +52,22 @@ export async function GET(req: NextRequest) {
   }
 }
 
+export async function DELETE(req: NextRequest) {
+  try {
+    const admin = await getSuperAdminFromRequest(req);
+    if (!admin) {
+      return errorResponse("Unauthorized", 401);
+    }
+
+    const { ids } = z.object({ ids: z.array(z.string()).min(1) }).parse(await req.json());
+    await connectDb();
+    const result = await HospitalUser.deleteMany({ _id: { $in: ids } });
+    return successResponse({ deleted: result.deletedCount }, `${result.deletedCount} user(s) deleted`);
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const admin = await getSuperAdminFromRequest(req);

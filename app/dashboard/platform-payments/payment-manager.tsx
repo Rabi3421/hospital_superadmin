@@ -56,7 +56,7 @@ export default function PaymentManager({ hospitals, payments }: { hospitals: Hos
       </div>
       <section className="overflow-x-auto rounded-lg border border-[#e2eae6] bg-white shadow-[0_12px_32px_rgba(32,45,39,0.04)]">
         {payments.length ? (
-          <table className="w-full min-w-[980px] text-left text-sm">
+          <table className="w-full min-w-[700px] text-left text-sm">
             <thead className="border-b border-[#edf2ef] bg-[#f8faf9] text-[11px] font-bold uppercase text-[#8a9591]">
               <tr><th className="px-5 py-4">Hospital</th><th className="px-5 py-4">Amount</th><th className="px-5 py-4">Payment</th><th className="px-5 py-4">Billing Month</th><th className="px-5 py-4">Status</th><th className="px-5 py-4">Date</th><th className="px-5 py-4 text-right">Actions</th></tr>
             </thead>

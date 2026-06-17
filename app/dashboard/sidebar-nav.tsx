@@ -48,15 +48,17 @@ const navItems: NavItem[] = [
   { href: "/dashboard/settings", label: "Settings", icon: Settings, section: "Settings" },
 ];
 
-export default function SidebarNav() {
+export default function SidebarNav({ onNavigate }: { onNavigate?: () => void } = {}) {
   const pathname = usePathname();
 
   return (
-    <nav className="flex gap-2 overflow-x-auto px-3 pb-4 lg:block lg:flex-1 lg:overflow-y-auto lg:overflow-x-hidden lg:px-5">
+    <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-24 pt-3">
       {["Main Menu", "Operations", "Settings"].map((section) => (
-        <div key={section} className="lg:mb-7">
-          <p className="hidden px-3 pb-3 text-[12px] font-medium text-[#9aa5a1] lg:block">{section}</p>
-          <div className="flex gap-2 lg:block lg:space-y-1">
+        <div key={section}>
+          <p className="px-4 pb-1 pt-4 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
+            {section}
+          </p>
+          <div className="space-y-0.5">
             {navItems
               .filter((item) => item.section === section)
               .map((item) => {
@@ -70,15 +72,16 @@ export default function SidebarNav() {
                   <Link
                     key={`${section}-${item.label}`}
                     href={item.href}
+                    onClick={onNavigate}
                     aria-current={active ? "page" : undefined}
-                    className={`flex min-w-max items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold transition ${
+                    className={`flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
                       active
-                        ? "border-r-2 border-[#278b7c] bg-[#edf8f3] text-[#1f7b6f]"
-                        : "text-[#687370] hover:bg-[#f3f7f5] hover:text-[#1f7b6f]"
+                        ? "bg-[#edf8f3] text-[#278b7c]"
+                        : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                     }`}
                   >
-                    <Icon size={17} />
-                    {item.label}
+                    <Icon size={18} className="shrink-0" />
+                    <span className="truncate">{item.label}</span>
                   </Link>
                 );
               })}

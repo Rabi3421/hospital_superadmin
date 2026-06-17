@@ -42,7 +42,7 @@ export default async function SubscriptionsPage({ searchParams }: { searchParams
         <p className="mt-1 text-sm font-medium text-[#7a8581]">Monthly payment is due on the 5th, with service grace through the 10th before automatic suspension.</p>
       </div>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Summary label="Active Subscriptions" value={statusCount("Active")} />
         <Summary label="Trial Subscriptions" value={statusCount("Trial")} />
         <Summary label="Overdue" value={statusCount("Overdue")} warning />

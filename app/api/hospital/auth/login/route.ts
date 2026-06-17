@@ -74,7 +74,6 @@ export async function POST(req: NextRequest) {
       userId: user._id.toString(),
       hospitalId: hospital.hospitalId,
       role: user.role,
-      permissions,
     }, user, hospital });
     const response = successResponse(
       serializeDoc({

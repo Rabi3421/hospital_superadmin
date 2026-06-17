@@ -2,12 +2,13 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LockKeyhole, LogIn, Mail, ShieldPlus } from "lucide-react";
+import { Eye, EyeOff, LockKeyhole, LogIn, Mail, ShieldPlus } from "lucide-react";
 
 export default function LoginForm() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -76,11 +77,19 @@ export default function LoginForm() {
         <input
           id="password"
           name="password"
-          type="password"
+          type={showPassword ? "text" : "password"}
           required
           placeholder="Enter password"
           className="h-full w-full bg-transparent text-sm font-semibold text-[#151918] outline-none placeholder:text-[#9aa5a1]"
         />
+        <button
+          type="button"
+          onClick={() => setShowPassword((v) => !v)}
+          aria-label={showPassword ? "Hide password" : "Show password"}
+          className="flex-shrink-0 text-[#8a9591] hover:text-[#278b7c]"
+        >
+          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
       </div>
       <div className="mt-4 flex items-center justify-between text-sm font-semibold">
         <label className="flex items-center gap-2 text-[#687370]">

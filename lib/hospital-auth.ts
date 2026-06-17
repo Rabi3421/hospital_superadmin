@@ -1,7 +1,7 @@
 import jwt, { type Secret, type SignOptions } from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 import { connectDb } from "@/lib/db";
-import { resolveHospitalPermissions, type HospitalRole } from "@/lib/hospital-permissions";
+import { type HospitalRole } from "@/lib/hospital-permissions";
 import { roleAllowedForHospital } from "@/lib/subscription-plans";
 import { reconcileSubscriptionBilling } from "@/lib/subscription-billing";
 import Hospital, { type HospitalDocument } from "@/models/Hospital";
@@ -13,7 +13,6 @@ export type HospitalUserJwtPayload = {
   userId: string;
   hospitalId: string;
   role: HospitalRole;
-  permissions: string[];
   iat?: number;
   exp?: number;
 };
@@ -40,7 +39,6 @@ export function signHospitalUserToken(user: HospitalUserDocument) {
       userId: user._id.toString(),
       hospitalId: user.hospitalId,
       role: user.role,
-      permissions: resolveHospitalPermissions(user.role, user.permissions),
     } satisfies HospitalUserJwtPayload,
     getHospitalJwtSecret(),
     { expiresIn },

@@ -10,12 +10,12 @@ export function PageHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-[#151918]">{title}</h1>
+    <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+      <div className="min-w-0">
+        <h1 className="text-xl font-bold tracking-tight text-[#151918] sm:text-2xl">{title}</h1>
         <p className="mt-1 text-sm font-medium text-[#7a8581]">{description}</p>
       </div>
-      {action}
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }
@@ -39,12 +39,12 @@ export function SummaryCard({
   };
 
   return (
-    <div className="rounded-lg border border-[#e2eae6] bg-white p-5 shadow-[0_12px_32px_rgba(32,45,39,0.04)]">
+    <div className="rounded-lg border border-[#e2eae6] bg-white p-4 shadow-[0_12px_32px_rgba(32,45,39,0.04)] sm:p-5">
       <div className="flex items-center gap-3">
-        <span className={`flex h-9 w-9 items-center justify-center rounded-md ${tones[tone]}`}><Icon size={17} /></span>
-        <p className="text-sm font-bold text-[#687370]">{label}</p>
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${tones[tone]}`}><Icon size={17} /></span>
+        <p className="text-xs font-bold text-[#687370] sm:text-sm">{label}</p>
       </div>
-      <p className="mt-4 text-3xl font-bold text-[#151918]">{value}</p>
+      <p className="mt-3 text-2xl font-bold text-[#151918] sm:mt-4 sm:text-3xl">{value}</p>
     </div>
   );
 }
