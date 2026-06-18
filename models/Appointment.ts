@@ -23,6 +23,12 @@ export const appointmentSources = [
 
 export type AppointmentSource = (typeof appointmentSources)[number];
 
+export const triageStatuses = ["Pending", "In Triage", "Ready For Doctor", "Completed"] as const;
+export type TriageStatus = (typeof triageStatuses)[number];
+
+export const triagePriorities = ["Low", "Normal", "High", "Critical"] as const;
+export type TriagePriority = (typeof triagePriorities)[number];
+
 export interface AppointmentDocument extends Document {
   hospitalId: string;
   appointmentId: string;
@@ -50,6 +56,12 @@ export interface AppointmentDocument extends Document {
   completedAt?: Date;
   cancelledAt?: Date;
   cancellationReason?: string;
+  triageStatus?: TriageStatus;
+  triagePriority?: TriagePriority;
+  triageNotes?: string;
+  nurseAssignedId?: string;
+  nurseReadyAt?: Date;
+  latestVitalId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -82,6 +94,12 @@ const appointmentSchema = new Schema<AppointmentDocument>(
     completedAt: { type: Date },
     cancelledAt: { type: Date },
     cancellationReason: { type: String, default: "", trim: true },
+    triageStatus: { type: String, enum: triageStatuses, default: "Pending" },
+    triagePriority: { type: String, enum: triagePriorities, default: "Normal" },
+    triageNotes: { type: String, default: "", trim: true },
+    nurseAssignedId: { type: String, default: "", trim: true },
+    nurseReadyAt: { type: Date },
+    latestVitalId: { type: String, default: "", trim: true },
   },
   { timestamps: true },
 );

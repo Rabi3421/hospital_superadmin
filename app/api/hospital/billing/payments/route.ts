@@ -5,6 +5,7 @@ import { generateBillPaymentId, refreshBillPaymentStatus } from "@/lib/hospital-
 import { connectDb } from "@/lib/db";
 import { endOfDay, escapeRegex, getPagination, startOfDay } from "@/lib/hospital-clinical";
 import { requireHospitalPermission } from "@/lib/hospital-auth";
+import { sendEventNotification } from "@/lib/notifications/notification-service";
 import Bill from "@/models/Bill";
 import BillPayment from "@/models/BillPayment";
 import Patient from "@/models/Patient";
@@ -128,6 +129,32 @@ export async function POST(req: NextRequest) {
         await BillPayment.deleteOne({ hospitalId, paymentId: payment.paymentId });
         throw error;
       }
+    }
+
+    // Fire-and-forget notification for successful payments
+    if (payment.status === "Success") {
+      try {
+        const patient = await Patient.findOne({ hospitalId, patientId: bill.patientId }).select("name phone");
+        if (patient?.phone) {
+          void sendEventNotification({
+            hospitalId,
+            eventType: "PAYMENT_RECEIVED",
+            recipient: {
+              type: "PATIENT",
+              name: patient.name,
+              phone: patient.phone,
+              patientId: bill.patientId,
+            },
+            context: {
+              patientName: patient.name,
+              amount: String(payment.amount),
+              billNumber: bill.billId,
+              hospitalName: session.hospital.name,
+            },
+            relatedIds: { billId: bill.billId, paymentId: payment.paymentId },
+          }).catch(() => {});
+        }
+      } catch {}
     }
 
     return successResponse(serializeDoc({ payment, bill: refreshedBill }), "Payment recorded", 201);

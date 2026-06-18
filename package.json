@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:demo-hospital": "npx tsx scripts/seed-demo-hospital.ts",
+    "seed:demo-hospital:dry": "DEMO_SEED_DRY_RUN=true npx tsx scripts/seed-demo-hospital.ts",
+    "seed:demo-hospital:reset": "DEMO_SEED_RESET=true DEMO_SEED_CONFIRM=true npx tsx scripts/seed-demo-hospital.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -24,9 +27,11 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
     "tailwindcss": "^4",
+    "tsx": "^4.22.4",
     "typescript": "^5"
   }
 }

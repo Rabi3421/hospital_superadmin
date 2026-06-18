@@ -3,6 +3,9 @@ import { errorResponse, handleApiError, serializeDoc, successResponse } from "@/
 import { connectDb } from "@/lib/db";
 import { assertDoctorOwnsRecord } from "@/lib/hospital-clinical";
 import { requireHospitalPermission } from "@/lib/hospital-auth";
+import { sendEventNotification } from "@/lib/notifications/notification-service";
+import HospitalUser from "@/models/HospitalUser";
+import Patient from "@/models/Patient";
 import Prescription from "@/models/Prescription";
 
 type RouteContext = { params: Promise<{ prescriptionId: string }> };
@@ -33,6 +36,33 @@ export async function POST(req: NextRequest, context: RouteContext) {
     prescription.status = "Issued";
     prescription.issuedAt = new Date();
     await prescription.save();
+
+    // Fire-and-forget notification
+    try {
+      const hospitalId = session.payload.hospitalId;
+      const [patient, doctor] = await Promise.all([
+        Patient.findOne({ hospitalId, patientId: prescription.patientId }).select("name phone"),
+        HospitalUser.findOne({ _id: prescription.doctorUserId, hospitalId }).select("name"),
+      ]);
+      if (patient?.phone) {
+        void sendEventNotification({
+          hospitalId,
+          eventType: "PRESCRIPTION_ISSUED",
+          recipient: {
+            type: "PATIENT",
+            name: patient.name,
+            phone: patient.phone,
+            patientId: prescription.patientId,
+          },
+          context: {
+            patientName: patient.name,
+            doctorName: doctor?.name ?? "",
+            hospitalName: session.hospital.name,
+          },
+          relatedIds: { prescriptionId },
+        }).catch(() => {});
+      }
+    } catch {}
 
     return successResponse(serializeDoc(prescription), "Prescription issued");
   } catch (error) {

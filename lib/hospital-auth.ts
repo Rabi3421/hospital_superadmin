@@ -1,7 +1,7 @@
 import jwt, { type Secret, type SignOptions } from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 import { connectDb } from "@/lib/db";
-import { type HospitalRole } from "@/lib/hospital-permissions";
+import { type HospitalRole, resolveHospitalPermissions } from "@/lib/hospital-permissions";
 import { roleAllowedForHospital } from "@/lib/subscription-plans";
 import { reconcileSubscriptionBilling } from "@/lib/subscription-billing";
 import Hospital, { type HospitalDocument } from "@/models/Hospital";

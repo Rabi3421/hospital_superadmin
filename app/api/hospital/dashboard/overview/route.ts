@@ -20,6 +20,10 @@ import MedicineBatch from "@/models/MedicineBatch";
 import Patient from "@/models/Patient";
 import PharmacySale from "@/models/PharmacySale";
 import Prescription from "@/models/Prescription";
+import PatientVitalRecord from "@/models/PatientVitalRecord";
+import NursingNote from "@/models/NursingNote";
+import NurseCareTask from "@/models/NurseCareTask";
+import MedicationAdministrationRecord from "@/models/MedicationAdministrationRecord";
 
 export async function GET(req: NextRequest) {
   try {
@@ -346,6 +350,48 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    if (session.user.role === "NURSE") {
+      const nurseUserId = session.payload.userId;
+      const [
+        todayAppointments,
+        waitingForTriage,
+        inTriage,
+        readyForDoctor,
+        criticalPriority,
+        vitalsRecordedToday,
+        nursingNotesToday,
+        pendingCareTasks,
+        completedCareTasksToday,
+        medicationAdministrationsToday,
+      ] = await Promise.all([
+        Appointment.countDocuments({ hospitalId, appointmentDate: today }),
+        Appointment.countDocuments({ hospitalId, appointmentDate: today, triageStatus: "Pending", status: { $in: ["Scheduled", "Checked In"] } }),
+        Appointment.countDocuments({ hospitalId, appointmentDate: today, triageStatus: "In Triage" }),
+        Appointment.countDocuments({ hospitalId, appointmentDate: today, triageStatus: "Ready For Doctor" }),
+        Appointment.countDocuments({ hospitalId, appointmentDate: today, triagePriority: "Critical", status: { $nin: ["Completed", "Cancelled"] } }),
+        PatientVitalRecord.countDocuments({ hospitalId, nurseUserId, recordedAt: today }),
+        NursingNote.countDocuments({ hospitalId, nurseUserId, createdAt: today }),
+        NurseCareTask.countDocuments({ hospitalId, $or: [{ assignedNurseId: nurseUserId }, { assignedNurseId: "" }], status: { $in: ["Pending", "In Progress"] } }),
+        NurseCareTask.countDocuments({ hospitalId, assignedNurseId: nurseUserId, status: "Completed", completedAt: today }),
+        MedicationAdministrationRecord.countDocuments({ hospitalId, administeredBy: nurseUserId, administeredAt: today }),
+      ]);
+      return successResponse({
+        role: session.user.role,
+        stats: {
+          todayAppointments,
+          waitingForTriage,
+          inTriage,
+          readyForDoctor,
+          criticalPriority,
+          vitalsRecordedToday,
+          nursingNotesToday,
+          pendingCareTasks,
+          completedCareTasksToday,
+          medicationAdministrationsToday,
+        },
+      });
+    }
+
     if (session.user.role === "PATIENT") {
       const patientSession = await requirePatientAuth(req);
       return successResponse({
@@ -354,14 +400,9 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const safeZeroStats: Record<string, Record<string, number>> = {
-      NURSE: { assignedPatients: 0, pendingVitals: 0, appointments: 0 },
-    };
-
     return successResponse({
       role: session.user.role,
-      stats: safeZeroStats[session.user.role] ?? {},
-      note: "These modules are not available yet; values are safe zero placeholders.",
+      stats: {},
     });
   } catch (error) {
     return handleApiError(error);

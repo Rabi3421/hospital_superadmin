@@ -1,10 +1,11 @@
 import { NextRequest } from "next/server";
-import { handleApiError, successResponse } from "@/lib/api-response";
+import { handleApiError, serializeDoc, successResponse } from "@/lib/api-response";
 import { connectDb } from "@/lib/db";
 import { dateRangeFor, endOfDay } from "@/lib/hospital-clinical";
 import { requireHospitalPermission } from "@/lib/hospital-auth";
 import Medicine from "@/models/Medicine";
 import MedicineBatch from "@/models/MedicineBatch";
+import Patient from "@/models/Patient";
 import PharmacySale from "@/models/PharmacySale";
 import Prescription from "@/models/Prescription";
 import StockMovement from "@/models/StockMovement";
@@ -19,11 +20,11 @@ export async function GET(req: NextRequest) {
 
     const [totalMedicines, medicines, activeBatches, todaySales, cancelledSalesToday, issuedPrescriptionsWithSales, stockMovementsToday] = await Promise.all([
       Medicine.countDocuments({ hospitalId }),
-      Medicine.find({ hospitalId, status: "Active" }).select("medicineId reorderLevel"),
+      Medicine.find({ hospitalId, status: "Active" }).select("medicineId name reorderLevel"),
       MedicineBatch.find({ hospitalId, status: "Active", expiryDate: { $gte: new Date() } }).select(
-        "medicineId quantityAvailable expiryDate",
+        "medicineId batchId batchNumber quantityAvailable expiryDate",
       ),
-      PharmacySale.find({ hospitalId, createdAt: today, saleStatus: "Completed" }).select("grandTotal"),
+      PharmacySale.find({ hospitalId, createdAt: today, saleStatus: "Completed" }).select("saleId patientId grandTotal createdAt"),
       PharmacySale.countDocuments({ hospitalId, createdAt: today, saleStatus: "Cancelled" }),
       PharmacySale.find({ hospitalId, prescriptionId: { $ne: "" }, saleStatus: "Completed" }).select("prescriptionId"),
       StockMovement.countDocuments({ hospitalId, createdAt: today }),
@@ -41,6 +42,8 @@ export async function GET(req: NextRequest) {
       expiredBatches,
       unpaidSales,
       issuedPrescriptionsPendingSale,
+      expiringSoonBatchesList,
+      pendingPrescriptionsList,
     ] = await Promise.all([
       MedicineBatch.countDocuments({ hospitalId, status: "Active", expiryDate: { $gte: new Date(), $lte: soon } }),
       MedicineBatch.countDocuments({ hospitalId, $or: [{ status: "Expired" }, { expiryDate: { $lt: new Date() } }] }),
@@ -50,13 +53,36 @@ export async function GET(req: NextRequest) {
         status: "Issued",
         prescriptionId: { $nin: soldPrescriptionIds },
       }),
+      MedicineBatch.find({ hospitalId, status: "Active", expiryDate: { $gte: new Date(), $lte: soon } })
+        .sort({ expiryDate: 1 }).limit(10).select("batchId medicineId batchNumber expiryDate quantityAvailable"),
+      Prescription.find({ hospitalId, status: "Issued", prescriptionId: { $nin: soldPrescriptionIds } })
+        .sort({ issuedAt: -1, createdAt: -1 }).limit(10).select("prescriptionId patientId doctorUserId issuedAt createdAt"),
     ]);
+
+    const lowStockMedicinesList = medicines
+      .filter((medicine) => (stockByMedicine[medicine.medicineId] ?? 0) <= medicine.reorderLevel)
+      .slice(0, 10)
+      .map((medicine) => ({
+        ...serializeDoc(medicine),
+        availableStock: stockByMedicine[medicine.medicineId] ?? 0,
+      }));
+
+    const allPatientIds = [
+      ...new Set([
+        ...todaySales.map((s) => s.patientId),
+        ...pendingPrescriptionsList.map((p) => p.patientId),
+      ]),
+    ];
+    const patients = await Patient.find({ hospitalId, patientId: { $in: allPatientIds } }).select("patientId name phone");
+    const patientMap = new Map(patients.map((p) => [p.patientId, p]));
+
+    const medicineLookup = new Map(medicines.map((m) => [m.medicineId, m]));
 
     return successResponse({
       totalMedicines,
       activeMedicines: medicines.length,
       totalActiveMedicines: medicines.length,
-      lowStockMedicines: medicines.filter((medicine) => (stockByMedicine[medicine.medicineId] ?? 0) <= medicine.reorderLevel).length,
+      lowStockMedicines: lowStockMedicinesList.length,
       outOfStockMedicines: medicines.filter((medicine) => (stockByMedicine[medicine.medicineId] ?? 0) <= 0).length,
       expiringSoonBatches,
       expiredBatches,
@@ -70,6 +96,19 @@ export async function GET(req: NextRequest) {
       stockMovementsToday,
       issuedPrescriptionsPendingSale,
       pendingPrescriptions: issuedPrescriptionsPendingSale,
+      lowStockMedicinesList,
+      expiringSoonBatchesList: expiringSoonBatchesList.map((batch) => ({
+        ...serializeDoc(batch),
+        medicineName: medicineLookup.get(batch.medicineId)?.name ?? batch.medicineId,
+      })),
+      pendingPrescriptionsList: pendingPrescriptionsList.map((rx) => ({
+        ...serializeDoc(rx),
+        patient: patientMap.get(rx.patientId) ? serializeDoc(patientMap.get(rx.patientId)) : null,
+      })),
+      todaySalesList: todaySales.slice(0, 10).map((sale) => ({
+        ...serializeDoc(sale),
+        patient: patientMap.get(sale.patientId) ? serializeDoc(patientMap.get(sale.patientId)) : null,
+      })),
     });
   } catch (error) {
     return handleApiError(error);

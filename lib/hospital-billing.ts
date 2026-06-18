@@ -1,7 +1,12 @@
 import Bill, { type BillDocument, type BillItem } from "@/models/Bill";
 import BillPayment from "@/models/BillPayment";
+import Expense from "@/models/Expense";
+import InsuranceClaim from "@/models/InsuranceClaim";
 import LabOrder from "@/models/LabOrder";
+import PatientDeposit from "@/models/PatientDeposit";
+import PaymentReminder from "@/models/PaymentReminder";
 import PharmacySale from "@/models/PharmacySale";
+import Refund from "@/models/Refund";
 
 export type BillDiscountType = "None" | "Flat" | "Percentage";
 export type BillInputItem = Omit<BillItem, "total"> & { total?: number };
@@ -29,6 +34,75 @@ export async function generateBillPaymentId(hospitalId: string, date = new Date(
     .select("paymentId");
   const nextNumber = latest?.paymentId ? Number(latest.paymentId.slice(prefix.length)) + 1 : 1;
   return `${prefix}${String(nextNumber || 1).padStart(4, "0")}`;
+}
+
+export async function generateRefundId(hospitalId: string, date = new Date()) {
+  const year = date.getFullYear();
+  const prefix = `RFD-${year}-`;
+  const latest = await Refund.findOne({ hospitalId, refundId: { $regex: `^${prefix}` } })
+    .sort({ refundId: -1 })
+    .select("refundId");
+  const nextNumber = latest?.refundId ? Number(latest.refundId.slice(prefix.length)) + 1 : 1;
+  return `${prefix}${String(nextNumber || 1).padStart(4, "0")}`;
+}
+
+export async function generateExpenseId(hospitalId: string, date = new Date()) {
+  const year = date.getFullYear();
+  const prefix = `EXP-${year}-`;
+  const latest = await Expense.findOne({ hospitalId, expenseId: { $regex: `^${prefix}` } })
+    .sort({ expenseId: -1 })
+    .select("expenseId");
+  const nextNumber = latest?.expenseId ? Number(latest.expenseId.slice(prefix.length)) + 1 : 1;
+  return `${prefix}${String(nextNumber || 1).padStart(4, "0")}`;
+}
+
+export async function generateDepositId(hospitalId: string, date = new Date()) {
+  const year = date.getFullYear();
+  const prefix = `DEP-${year}-`;
+  const latest = await PatientDeposit.findOne({ hospitalId, depositId: { $regex: `^${prefix}` } })
+    .sort({ depositId: -1 })
+    .select("depositId");
+  const nextNumber = latest?.depositId ? Number(latest.depositId.slice(prefix.length)) + 1 : 1;
+  return `${prefix}${String(nextNumber || 1).padStart(4, "0")}`;
+}
+
+export async function generateReminderId(hospitalId: string, date = new Date()) {
+  const year = date.getFullYear();
+  const prefix = `RMD-${year}-`;
+  const latest = await PaymentReminder.findOne({ hospitalId, reminderId: { $regex: `^${prefix}` } })
+    .sort({ reminderId: -1 })
+    .select("reminderId");
+  const nextNumber = latest?.reminderId ? Number(latest.reminderId.slice(prefix.length)) + 1 : 1;
+  return `${prefix}${String(nextNumber || 1).padStart(4, "0")}`;
+}
+
+export async function generateClaimId(hospitalId: string, date = new Date()) {
+  const year = date.getFullYear();
+  const prefix = `CLM-${year}-`;
+  const latest = await InsuranceClaim.findOne({ hospitalId, claimId: { $regex: `^${prefix}` } })
+    .sort({ claimId: -1 })
+    .select("claimId");
+  const nextNumber = latest?.claimId ? Number(latest.claimId.slice(prefix.length)) + 1 : 1;
+  return `${prefix}${String(nextNumber || 1).padStart(4, "0")}`;
+}
+
+export async function processRefundOnBill(refundId: string, hospitalId: string) {
+  const refund = await Refund.findOne({ hospitalId, refundId });
+  if (!refund) throw new Error("Refund not found");
+  if (refund.status !== "Approved") throw new Error("Refund must be approved before processing");
+
+  const payment = await BillPayment.findOne({ hospitalId, paymentId: refund.paymentId });
+  if (!payment) throw new Error("Original payment not found");
+
+  payment.status = "Refunded";
+  await payment.save();
+
+  refund.status = "Processed";
+  refund.processedAt = new Date();
+  await refund.save();
+
+  const bill = await refreshBillPaymentStatus(refund.billId, hospitalId);
+  return { refund, bill };
 }
 
 export async function checkExistingBillForSource(hospitalId: string, sourceType: BillSourceType, sourceId: string) {

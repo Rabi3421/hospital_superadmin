@@ -4,8 +4,10 @@ import { errorResponse, handleApiError, serializeDoc, successResponse } from "@/
 import { connectDb } from "@/lib/db";
 import { generateAppointmentId, generateTokenNumber } from "@/lib/hospital-clinical";
 import { requirePatientAuth } from "@/lib/hospital-patient";
+import { sendEventNotification } from "@/lib/notifications/notification-service";
 import Appointment, { type AppointmentStatus } from "@/models/Appointment";
 import AppointmentSlot from "@/models/AppointmentSlot";
+import HospitalUser from "@/models/HospitalUser";
 
 const bookSlotSchema = z.object({
   slotId: z.string().min(1),
@@ -111,6 +113,30 @@ export async function POST(req: NextRequest) {
       notes: body.notes ?? "",
       createdBy: session.payload.userId,
     });
+
+    // Fire-and-forget notification
+    try {
+      const doctor = await HospitalUser.findOne({ _id: slot.doctorUserId, hospitalId }).select("name");
+      void sendEventNotification({
+        hospitalId,
+        eventType: "APPOINTMENT_BOOKED",
+        recipient: {
+          type: "PATIENT",
+          name: session.patient.name,
+          phone: session.patient.phone ?? "",
+          patientId,
+        },
+        context: {
+          patientName: session.patient.name,
+          doctorName: doctor?.name ?? "",
+          hospitalName: session.hospital.name,
+          appointmentDate: slot.date,
+          appointmentTime: slot.startTime,
+          tokenNumber,
+        },
+        relatedIds: { appointmentId },
+      }).catch(() => {});
+    } catch {}
 
     return successResponse(
       serializeDoc({

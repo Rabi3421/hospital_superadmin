@@ -4,6 +4,7 @@ import { errorResponse, handleApiError, serializeDoc, successResponse } from "@/
 import { connectDb } from "@/lib/db";
 import { dateRangeFor, endOfDay, escapeRegex, getPagination, startOfDay } from "@/lib/hospital-clinical";
 import { requireHospitalPermission } from "@/lib/hospital-auth";
+import { sendEventNotification } from "@/lib/notifications/notification-service";
 import {
   allocateStockFIFO,
   calculateSaleTotals,
@@ -210,6 +211,27 @@ export async function POST(req: NextRequest) {
       ]);
       throw error;
     }
+
+    // Fire-and-forget notification
+    try {
+      if (patient?.phone) {
+        void sendEventNotification({
+          hospitalId,
+          eventType: "PHARMACY_SALE_COMPLETED",
+          recipient: {
+            type: "PATIENT",
+            name: patient.name,
+            phone: patient.phone,
+            patientId: sale.patientId,
+          },
+          context: {
+            patientName: patient.name,
+            hospitalName: session.hospital.name,
+          },
+          relatedIds: { pharmacySaleId: sale.saleId },
+        }).catch(() => {});
+      }
+    } catch {}
 
     return successResponse(serializeDoc(sale), "Pharmacy sale created", 201);
   } catch (error) {

@@ -37,6 +37,7 @@ export function getAllowedNavigationForRole(role: HospitalRole): HospitalNavigat
       { label: "Lab", route: `${base}/lab` },
       { label: "Pharmacy", route: `${base}/pharmacy` },
       { label: "Website Content", route: `${base}/content` },
+      { label: "Notifications", route: `${base}/notifications` },
       { label: "Reports", route: `${base}/reports` },
       { label: "Settings", route: `${base}/settings` },
     ];
@@ -60,6 +61,7 @@ export function getAllowedNavigationForRole(role: HospitalRole): HospitalNavigat
       { label: "Lab", route: `${base}/lab` },
       { label: "Pharmacy", route: `${base}/pharmacy` },
       { label: "Website Content", route: `${base}/content` },
+      { label: "Notifications", route: `${base}/notifications` },
       { label: "Reports", route: `${base}/reports` },
       { label: "Settings", route: `${base}/settings` },
     ];
@@ -119,10 +121,9 @@ export function getAllowedNavigationForRole(role: HospitalRole): HospitalNavigat
       { label: "Bills", route: `${base}/bills` },
       { label: "Payments", route: `${base}/payments` },
       { label: "Receipts", route: `${base}/receipts` },
-      { label: "Reports", route: `${base}/reports` },
-      { label: "Daily Collection", route: `${base}/daily-collection` },
-      { label: "Dues", route: `${base}/dues` },
-      { label: "Summary", route: `${base}/summary` },
+      { label: "Daily Collection", route: `${base}/reports/daily-collection` },
+      { label: "Dues", route: `${base}/reports/dues` },
+      { label: "Summary", route: `${base}/reports/summary` },
     ];
   }
 
@@ -140,23 +141,21 @@ export function getAllowedNavigationForRole(role: HospitalRole): HospitalNavigat
       { label: "Bills", route: `${base}/bills` },
       { label: "Pharmacy History", route: `${base}/pharmacy` },
       { label: "Medical History", route: `${base}/medical-history` },
+      { label: "Notification Preferences", route: `${base}/notification-preferences` },
     ];
   }
 
-  const navigation: Record<HospitalRole, string[]> = {
-    HOSPITAL_ADMIN: [],
-    MANAGING_DIRECTOR: [],
-    RECEPTIONIST: [],
-    DOCTOR: [],
-    NURSE: ["Overview", "Patients", "Vitals", "Appointments"],
-    PHARMACIST: [],
-    LAB_TECHNICIAN: [],
-    ACCOUNTANT: [],
-    PATIENT: [],
-  };
+  if (role === "NURSE") {
+    const base = getDashboardRouteForRole(role);
+    return [
+      { label: "Overview", route: base },
+      { label: "Today Queue", route: `${base}/today-queue` },
+      { label: "Vitals", route: `${base}/vitals` },
+      { label: "Nursing Notes", route: `${base}/notes` },
+      { label: "Care Tasks", route: `${base}/care-tasks` },
+      { label: "Medications", route: `${base}/medications` },
+    ];
+  }
 
-  return navigation[role].map((label) => ({
-    label,
-    route: `${getDashboardRouteForRole(role)}/${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
-  }));
+  return [];
 }
