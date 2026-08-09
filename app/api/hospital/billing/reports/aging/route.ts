@@ -36,6 +36,7 @@ export async function GET(req: NextRequest) {
     let totalDaysWeighted = 0;
 
     const billDetails = bills.map((bill) => {
+      const patient = patientMap.get(bill.patientId);
       const daysPastDue = Math.floor((asOfDate.getTime() - new Date(bill.createdAt).getTime()) / (1000 * 60 * 60 * 24));
       const bucket = buckets.find((b) => daysPastDue >= b.min && daysPastDue <= b.max) ?? buckets[3];
       bucket.billCount++;
@@ -46,8 +47,8 @@ export async function GET(req: NextRequest) {
       return {
         billId: bill.billId,
         patientId: bill.patientId,
-        patientName: (patientMap.get(bill.patientId) as Record<string, unknown>)?.name ?? "Unknown",
-        patientPhone: (patientMap.get(bill.patientId) as Record<string, unknown>)?.phone ?? "",
+        patientName: patient?.name ?? "Unknown",
+        patientPhone: patient?.phone ?? "",
         grandTotal: bill.grandTotal,
         paidAmount: bill.paidAmount,
         dueAmount: bill.dueAmount,

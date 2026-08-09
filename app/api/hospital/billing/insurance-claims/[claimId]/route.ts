@@ -57,7 +57,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ cl
 
     const fields = ["status", "approvedAmount", "rejectedAmount", "tpaName", "tpaReferenceNumber", "preAuthNumber", "diagnosisCode", "remarks", "rejectionReason"] as const;
     fields.forEach((key) => {
-      if (body[key] !== undefined) (claim as Record<string, unknown>)[key] = body[key];
+      if (body[key] !== undefined) claim.set(key, body[key]);
     });
 
     await claim.save();

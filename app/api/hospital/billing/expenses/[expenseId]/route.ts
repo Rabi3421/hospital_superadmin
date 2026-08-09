@@ -59,7 +59,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ex
       "transactionId", "status", "recurring", "recurringFrequency", "notes",
     ] as const;
     fields.forEach((key) => {
-      if (body[key] !== undefined) (expense as Record<string, unknown>)[key] = body[key];
+      if (body[key] !== undefined) expense.set(key, body[key]);
     });
 
     if (body.paymentDate) expense.paymentDate = new Date(body.paymentDate);

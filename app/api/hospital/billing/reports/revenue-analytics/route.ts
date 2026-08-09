@@ -34,7 +34,9 @@ export async function GET(req: NextRequest) {
     const totalDue = bills.reduce((s, b) => s + b.dueAmount, 0);
 
     if (groupBy === "doctor") {
-      const doctorIds = [...new Set(bills.filter((b) => b.doctorUserId).map((b) => b.doctorUserId))];
+      const doctorIds = [
+        ...new Set(bills.map((b) => b.doctorUserId).filter((id): id is string => Boolean(id))),
+      ];
       const doctors = await HospitalUser.find({ hospitalId, _id: { $in: doctorIds } }).select("name role").lean();
       const doctorMap = new Map(doctors.map((d) => [String(d._id), d]));
 
@@ -57,17 +59,23 @@ export async function GET(req: NextRequest) {
     }
 
     if (groupBy === "department") {
-      const doctorIds = [...new Set(bills.filter((b) => b.doctorUserId).map((b) => b.doctorUserId))];
-      const doctors = await HospitalUser.find({ hospitalId, _id: { $in: doctorIds } }).select("name departmentId").lean();
+      const doctorIds = [
+        ...new Set(bills.map((b) => b.doctorUserId).filter((id): id is string => Boolean(id))),
+      ];
+      const doctors = await HospitalUser.find({ hospitalId, _id: { $in: doctorIds } })
+        .select("name departmentId")
+        .lean<Array<{ _id: unknown; name: string; departmentId?: string }>>();
       const doctorMap = new Map(doctors.map((d) => [String(d._id), d]));
-      const deptIds = [...new Set(doctors.filter((d) => (d as Record<string, unknown>).departmentId).map((d) => String((d as Record<string, unknown>).departmentId)))];
+      const deptIds = [
+        ...new Set(doctors.map((d) => d.departmentId).filter((id): id is string => Boolean(id))),
+      ];
       const departments = await HospitalDepartment.find({ hospitalId, _id: { $in: deptIds } }).select("name").lean();
       const deptMap = new Map(departments.map((d) => [String(d._id), d.name]));
 
       const byDept: Record<string, { departmentName: string; billCount: number; totalRevenue: number; paidAmount: number; dueAmount: number }> = {};
       for (const bill of bills) {
         const doc = bill.doctorUserId ? doctorMap.get(bill.doctorUserId) : null;
-        const deptId = doc ? String((doc as Record<string, unknown>).departmentId ?? "") : "";
+        const deptId = doc?.departmentId ?? "";
         const key = deptId || "unassigned";
         if (!byDept[key]) byDept[key] = { departmentName: deptMap.get(key) ?? "Unassigned", billCount: 0, totalRevenue: 0, paidAmount: 0, dueAmount: 0 };
         byDept[key].billCount++;
