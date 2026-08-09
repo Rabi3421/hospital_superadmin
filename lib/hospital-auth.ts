@@ -76,7 +76,13 @@ export function decodeHospitalToken(token: string) {
 }
 
 export async function getHospitalAuthSession(req: NextRequest): Promise<HospitalAuthSession | null> {
-  const token = req.cookies.get(hospitalUserCookieName)?.value;
+  let token = req.cookies.get(hospitalUserCookieName)?.value;
+  if (!token) {
+    const authHeader = req.headers.get("authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      token = authHeader.slice(7);
+    }
+  }
   if (!token) return null;
 
   try {

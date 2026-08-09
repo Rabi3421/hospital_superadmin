@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
       hospitalId: hospital.hospitalId,
       role: user.role,
     }, user, hospital });
+    const token = signHospitalUserToken(user);
     const response = successResponse(
       serializeDoc({
         user: safeUser,
@@ -89,11 +90,12 @@ export async function POST(req: NextRequest) {
         role: user.role,
         permissions,
         dashboardRoute: getDashboardRouteForRole(user.role),
+        token,
         ...patientState,
       }),
       "Hospital user logged in",
     );
-    setHospitalAuthCookie(response, signHospitalUserToken(user));
+    setHospitalAuthCookie(response, token);
     return response;
   } catch (error) {
     return handleApiError(error);
